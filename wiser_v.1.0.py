@@ -43,7 +43,7 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     '''
     extract JSON from news articles
     '''
-    
+
     article_list = []
     for URL_FILE in URL_FILES:
         # load news article URLs
@@ -94,19 +94,16 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
         outFile.write(json.dumps(article_list))
 
 
-def predict():
+def predict_popularity(ARTICLE_FILE):
     '''
     load JSON data
     and
     predict popularity of each news articles in Facebook
     '''
+    
+    DATA_PATH = 'data/'
 
     # load raw data in JSON format
-    DATA_PATH = 'data/'
-    # ARTICLE_FILE = 'articles_db.json'
-    # ARTICLE_FILE = 'articles_db_new.json'
-    ARTICLE_FILE = 'articles_db_temp.json'
-
     print "loading articles db file..."
     inFile = open(DATA_PATH + ARTICLE_FILE, 'r')
     articles_db = json.load(inFile)
@@ -510,4 +507,10 @@ if __name__ == '__main__':
 
     # extract_json_from_news_urls(URL_FILES, OUTPUT_FILE)
 
-    predict()
+    # -------------
+
+    # ARTICLE_FILE = 'articles_db.json'
+    # ARTICLE_FILE = 'articles_db_new.json'
+    ARTICLE_FILE = 'articles_db_temp.json'
+
+    predict_popularity(ARTICLE_FILE)

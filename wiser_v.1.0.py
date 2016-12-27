@@ -51,17 +51,13 @@ def extract_json_from_news_urls():
     # initiate a list for making .json
     article_list = []
     for URL_FILE in URL_FILES:
-        # load news article url file
-        inFile = open(DATA_PATH + URL_FILE, 'r')
-        dataset = inFile.readlines()
-        inFile.close()
+        # load news article URLs
+        with open(DATA_PATH + URL_FILE, 'r') as inFile:
+            dataset = inFile.readlines()
 
-        i = 0
-
-        for url in dataset:
-            i += 1
+        # read each URL
+        for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
-                
                 article_dict = {}
 
                 print "---------------------------------------------"
@@ -72,7 +68,7 @@ def extract_json_from_news_urls():
                     art.nlp()
                 except newspaper.article.ArticleException:
                     print "NLP ERROR\n"
-                print str(i)+"/"+str(len(dataset))+" : "+art.title + "\r"
+                print str(idx)+"/"+str(len(dataset))+" : "+art.title + "\r"
 
                 article_dict['url'] = art.url
                 article_dict['media'] = None
@@ -97,19 +93,11 @@ def extract_json_from_news_urls():
                 article_dict["tweets"]  = None
                 article_dict["search_keyword"]  = URL_FILE[4:-4]
 
-                # print article_dict
-
                 article_list.append(article_dict)
 
-        # print article_list
-        print "---------------------------------------------"
-
-    # print json.dumps(article_list)
-
-    # print article_list
-    outFile = open(DATA_PATH + OUTPUT_FILE, 'w')
-    outFile.write(json.dumps(article_list))
-    outFile.close()
+    # write to output file
+    with open(DATA_PATH + OUTPUT_FILE, 'w') as outFile:
+        outFile.write(json.dumps(article_list))
 
 
 def predict():

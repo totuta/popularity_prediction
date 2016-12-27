@@ -33,28 +33,22 @@ from sklearn import cross_validation
 
 
 DATA_PATH = 'data/'
-# URL_FILE = 'url.txt'
-URL_FILES = ['url_climate.txt','url_drought.txt','url_weather.txt']
-# OUTPUT_FILE = 'articles_db.json'
-OUTPUT_FILE = 'articles_db_new.json'
 
 # GloVe word embedding
 WDEMB_PATH = 'data/'
 WDEMB_FILE = 'glove.6B.50d.txt'
 
 
-def extract_json_from_news_urls():
+def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     '''
-    extract json from news articles
+    extract JSON from news articles
     '''
-
-    # initiate a list for making .json
+    
     article_list = []
     for URL_FILE in URL_FILES:
         # load news article URLs
         with open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
-
         # read each URL
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
@@ -101,6 +95,11 @@ def extract_json_from_news_urls():
 
 
 def predict():
+    '''
+    load JSON data
+    and
+    predict popularity of each news articles in Facebook
+    '''
 
     # load raw data in JSON format
     DATA_PATH = 'data/'
@@ -504,6 +503,11 @@ def predict():
 
 if __name__ == '__main__':
 
-    # extract_json_from_news_urls()
+    # URL_FILE = 'url.txt'
+    URL_FILES = ['url_climate.txt','url_drought.txt','url_weather.txt']
+    # OUTPUT_FILE = 'articles_db.json'
+    OUTPUT_FILE = 'articles_db_new.json'
+
+    # extract_json_from_news_urls(URL_FILES, OUTPUT_FILE)
 
     predict()

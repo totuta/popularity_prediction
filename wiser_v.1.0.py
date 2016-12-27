@@ -50,9 +50,7 @@ def extract_json_from_news_urls():
 
     # initiate a list for making .json
     article_list = []
-
     for URL_FILE in URL_FILES:
-
         # load news article url file
         inFile = open(DATA_PATH + URL_FILE, 'r')
         dataset = inFile.readlines()

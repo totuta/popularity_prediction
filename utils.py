@@ -568,11 +568,11 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
         hot_cnt = 0
 
         for res in result:
-            if res >= threshold_hotnot: result_hotnot.append('++')
+            if res > threshold_hotnot: result_hotnot.append('++')
             else: result_hotnot.append('__')
         
         for tgt in target:
-            if tgt >= threshold_hotnot:
+            if tgt > threshold_hotnot:
                 target_hotnot.append('++')
                 hot_cnt += 1
             else:
@@ -615,15 +615,15 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
         high_cnt, mid_cnt, low_cnt = 0, 0, 0
 
         for res in result:
-            if   res >= threshold_upper: result_hml.append('++')
-            elif res >= threshold_lower: result_hml.append('//')
+            if   res > threshold_upper: result_hml.append('++')
+            elif res > threshold_lower: result_hml.append('//')
             else: result_hml.append('__')
         
         for tgt in target:
-            if   tgt >= threshold_upper:
+            if   tgt > threshold_upper:
                 target_hml.append('++')
                 high_cnt += 1
-            elif tgt >= threshold_lower:
+            elif tgt > threshold_lower:
                 target_hml.append('//')
                 mid_cnt += 1
             else:
@@ -647,8 +647,8 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
             elif comparison_hml[i][0] == '//':
                 if   comparison_hml[i][1] == '//': TM += 1
                 else : FM += 1
-            elif comparison_hml[i][0] == '--':
-                if   comparison_hml[i][1] == '--': TL += 1
+            elif comparison_hml[i][0] == '__':
+                if   comparison_hml[i][1] == '__': TL += 1
                 else : FL += 1
 
         acc = (TH+TM+TL)/total_count
@@ -659,3 +659,23 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
             print "Accuracy : {0:.2f}".format(acc)
 
         return acc, _, _, _
+
+    # regression
+    elif mode  == 'regression':
+        
+        percentage = [int(100*pair[0]/pair[1]) for pair in comparison_value]
+        
+        if verbose: print percentage
+
+        acc = np.mean(percentage)
+        _   = None
+
+        print "Average (percentage) accuracy: {0:.2f}".format(np.mean(percentage))
+
+        return acc, _, _, _
+
+
+
+
+
+

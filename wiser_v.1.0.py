@@ -94,7 +94,7 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
         outFile.write(json.dumps(article_list))
 
 
-def predict_popularity(ARTICLE_FILE):
+def predict_popularity(ARTICLE_FILE, mode='binary'):
     '''
     load JSON data
     and
@@ -301,20 +301,36 @@ def predict_popularity(ARTICLE_FILE):
     # append word embedding to vectorized features
     dictvec_trn_X = np.hstack((dictvec_trn_X * classic_wgt,
                                wdemb_title_matrix * wdemb_title_wgt,
+    
                                wdemb_text_matrix * wdemb_text_wgt))
-    dictvec_trn_Y = []
-
     # preparing targets
-    for item in dict_Y:
-        # dictvec_trn_Y.append(item['num_likes'])
-        # dictvec_trn_Y.append(item['num_comments'])
-        # if max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf')) > 10:
-        # # if item['num_likes'] > 10:
-        #     val = 20
-        # else:
-        #     val = 0
-        # dictvec_trn_Y.append(val)
-        dictvec_trn_Y.append(max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf')))
+    dictvec_trn_Y = []
+    if  mode=='binary':
+        threshold = [10]
+        for item in dict_Y:
+            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            if num_likes_comments > threshold[0]:
+                val = 20
+            else:
+                val = 0
+            dictvec_trn_Y.append(val)
+    elif mode=='ternary':
+        threshold = [10,20]
+        threshold_upper = max(threshold)
+        threshold_lower = min(threshold)
+        for item in dict_Y:
+            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            if   num_likes_comments > threshold_upper:
+                val = 40
+            elif num_likes_comments > threshold_lower:
+                val = 20
+            else:
+                val = 0
+            dictvec_trn_Y.append(val)
+    elif mode=='regression':
+        for item in dict_Y:
+            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            dictvec_trn_Y.append(num_likes_comments)
 
     # take care of NaN and INF
     dictvec_trn_X = np.nan_to_num(dictvec_trn_X)
@@ -351,23 +367,15 @@ def predict_popularity(ARTICLE_FILE):
     # Logistic Regression
     # clf = linear_model.LogisticRegression(penalty='l2', C=1)
 
+    # Linear Regression    
+    # clf = linear_model.LinearRegression()
+
     # Perceptron : Passive Aggressive
     # clf = PassiveAggressiveClassifier(n_jobs=-1)
 
     # Decision Tree
     #   Decision Tree needs to directly take the sparse matrix. So, use .toarray() option
     # clf = tree.DecisionTreeClassifier(criterion='gini')
-
-    # Linear Regression    
-    # clf = linear_model.LinearRegression()
-
-    # SGD
-    # clf = SGDClassifier()
-
-    # KNN
-    #   이거는 거의 값을 0으로 만들어 버린다 안될 듯
-    # clf = neighbors.KNeighborsClassifier()
-    
 
     # Random Forest
     # clf = ensemble.RandomForestClassifier(max_depth=3)
@@ -376,8 +384,9 @@ def predict_popularity(ARTICLE_FILE):
     # AdaBoost
     # clf = ensemble.AdaBoostClassifier()
 
-
-
+    # KNN
+    #   이거는 거의 값을 0으로 만들어 버린다 안될 듯
+    # clf = neighbors.KNeighborsClassifier()
 
 
     # cross validation
@@ -410,40 +419,19 @@ def predict_popularity(ARTICLE_FILE):
         result = clf.predict(test_X)
 
         # evaluate
-        acc, prc, rec, f1 = evaluate(result, test_Y, verbose=True)
+        acc, prc, rec, f1 = evaluate(result, test_Y, mode='binary',     threshold=threshold , verbose=True)
+        # acc, prc, rec, f1 = evaluate(result, test_Y, mode='ternary',    threshold=threshold , verbose=True)
+        # acc, prc, rec, f1 = evaluate(result, test_Y, mode='regression', threshold=threshold , verbose=True)
         acc_list.append(acc)
         prc_list.append(prc)
         rec_list.append(rec)
         f1_list.append(f1)
-
-        # # print out HOTs and NOTs
-        # #   HOTs
-        # print "----------------------------------------------"
-        # print "HOT articles"
-        # print "----------------------------------------------"
-        # for i, res in enumerate(result):
-        #     if res > 10:
-        #         hot_set.add(articles_db[test_index[i]]['title'])
-        #         hot_vecs_list.append(wdemb_title_matrix[i])
-
-        # #   NOTs
-        # print "----------------------------------------------"
-        # print "NOT articles"
-        # print "----------------------------------------------"
-        # for i, res in enumerate(result):
-        #     if res <= 10:
-        #         not_set.add(articles_db[test_index[i]]['title'])
-        #         not_vecs_list.append(wdemb_title_matrix[i])
-
-
 
     print "----------------------------------------------"
     print "Average Accuracy  : {}".format(np.mean(acc_list))
     print "Average Precision : {}".format(np.mean(prc_list))
     print "Average Recall    : {}".format(np.mean(rec_list))
     print "Average F1        : {}".format(np.mean(f1_list ))
-
-
 
 
 if __name__ == '__main__':
@@ -461,4 +449,4 @@ if __name__ == '__main__':
     # ARTICLE_FILE = 'articles_db_new.json'
     ARTICLE_FILE = 'articles_db_temp.json'
 
-    predict_popularity(ARTICLE_FILE)
+    predict_popularity(ARTICLE_FILE, mode='binary')

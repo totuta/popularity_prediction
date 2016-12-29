@@ -637,24 +637,24 @@ def evaluate(result, target, mode='binary', threshold, verbose=True):
 
 
         # something like Complexity Matrix
-        TP, FP, TN, FN = 0, 0, 0, 0
+        TH, FH, TM, FM, TL, FL = 0,0,0,0,0,0
         for i in range(total_count):
-            # if verbose: print i, comparison_hotnot[i]
-            if   comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '++': TP += 1
-            elif comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '__': FP += 1
-            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '__': TN += 1
-            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '++': FN += 1
+            # if verbose: print i, comparison_hml[i]
+            if   comparison_hml[i][0] == '++':
+                if   comparison_hml[i][1] == '++': TH += 1
+                else : FH += 1
+            elif comparison_hml[i][0] == '//':
+                if   comparison_hml[i][1] == '//': TM += 1
+                else : FM += 1
+            elif comparison_hml[i][0] == '--':
+                if   comparison_hml[i][1] == '--': TL += 1
+                else : FL += 1
 
-        acc = round((TP+TN)/total_count,2)
-        prc = round(TP/(TP+FP),2)
-        rec = round(TP/(TP+FN),2)
+        acc = round((TH+TM+TL)/total_count,2)
         _   = None
         
         if verbose :
-            print "TP: {}, FP: {}, TN: {}, FN: {}".format(TP, FP, TN, FN)
+            print "TH: {}, FH: {}, TM: {}, FM: {}, TL: {}, FL: {}".format(TH, FH, TM, FM, TL, FL)
             print "Accuracy : {}".format(acc)
-            print "Precision: {}".format(prc)
-            print "Recall   : {}".format(rec)
-            print "F1 score : {}".format(f1)
 
-        return acc, prc, rec, _
+        return acc, _, _, _

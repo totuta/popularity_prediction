@@ -552,12 +552,13 @@ def word_emb_avg(text, word_embedding_dict):
     return wdemb_avg
 
 
-def evaluate(result, target, mode='binary', threshold, verbose=True):
+def evaluate(result, target, threshold, mode='binary', verbose=True):
 
     total_count = len(result)
     comparison_value = zip(result,target)
 
-    if verbose: for i in range(total_count): print i, comparison_value[i]
+    if verbose:
+        for i in range(total_count): print i, comparison_value[i]
 
     # binary classification
     if   mode == 'binary':
@@ -590,17 +591,17 @@ def evaluate(result, target, mode='binary', threshold, verbose=True):
             elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '__': TN += 1
             elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '++': FN += 1
 
-        acc = round((TP+TN)/total_count,2)
-        prc = round(TP/(TP+FP),2)
-        rec = round(TP/(TP+FN),2)
-        f1  = round(2*prc*rec/(prc+rec),2)
+        acc = (TP+TN)/total_count
+        prc = TP/(TP+FP)
+        rec = TP/(TP+FN)
+        f1  = 2*prc*rec/(prc+rec)
         
         if verbose :
             print "TP: {}, FP: {}, TN: {}, FN: {}".format(TP, FP, TN, FN)
-            print "Accuracy : {}".format(acc)
-            print "Precision: {}".format(prc)
-            print "Recall   : {}".format(rec)
-            print "F1 score : {}".format(f1)
+            print "Accuracy : {0:.2f}".format(acc)
+            print "Precision: {0:.2f}".format(prc)
+            print "Recall   : {0:.2f}".format(rec)
+            print "F1 score : {0:.2f}".format(f1)
 
         return acc, prc, rec, f1
 
@@ -631,9 +632,9 @@ def evaluate(result, target, mode='binary', threshold, verbose=True):
 
         comparison_hml = zip(result_hml, target_hml)
 
-        print "High Ratio: {}".format(round(high_cnt/total_count,2))
-        print "Mid  Ratio: {}".format(round(mid_cnt/total_count,2))
-        print "Low  Ratio: {}".format(round(low_cnt/total_count,2))
+        print "High Ratio: {0:.2f}".format(high_cnt/total_count)
+        print "Mid  Ratio: {0:.2f}".format(mid_cnt/total_count)
+        print "Low  Ratio: {0:.2f}".format(low_cnt/total_count)
 
 
         # something like Complexity Matrix
@@ -650,11 +651,11 @@ def evaluate(result, target, mode='binary', threshold, verbose=True):
                 if   comparison_hml[i][1] == '--': TL += 1
                 else : FL += 1
 
-        acc = round((TH+TM+TL)/total_count,2)
+        acc = (TH+TM+TL)/total_count
         _   = None
         
         if verbose :
             print "TH: {}, FH: {}, TM: {}, FM: {}, TL: {}, FL: {}".format(TH, FH, TM, FM, TL, FL)
-            print "Accuracy : {}".format(acc)
+            print "Accuracy : {0:.2f}".format(acc)
 
         return acc, _, _, _

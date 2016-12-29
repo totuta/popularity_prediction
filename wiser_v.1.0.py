@@ -399,8 +399,6 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     # for evaluation
     acc_list, prc_list, rec_list, f1_list = [],[],[],[]
-    hot_set, not_set = set(), set()
-    hot_vecs_list, not_vecs_list = [],[]
     for i, indices in enumerate(rs):
         train_index, test_index = indices[0], indices[1]
         train_X = [dictvec_trn_X[ind] for ind in train_index]
@@ -419,19 +417,17 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
         result = clf.predict(test_X)
 
         # evaluate
-        acc, prc, rec, f1 = evaluate(result, test_Y, mode='binary',     threshold=threshold , verbose=True)
-        # acc, prc, rec, f1 = evaluate(result, test_Y, mode='ternary',    threshold=threshold , verbose=True)
-        # acc, prc, rec, f1 = evaluate(result, test_Y, mode='regression', threshold=threshold , verbose=True)
+        acc, prc, rec, f1 = evaluate(result, test_Y, threshold=threshold , mode=mode, verbose=True)
         acc_list.append(acc)
         prc_list.append(prc)
         rec_list.append(rec)
         f1_list.append(f1)
 
     print "----------------------------------------------"
-    print "Average Accuracy  : {}".format(np.mean(acc_list))
-    print "Average Precision : {}".format(np.mean(prc_list))
-    print "Average Recall    : {}".format(np.mean(rec_list))
-    print "Average F1        : {}".format(np.mean(f1_list ))
+    print "Average Accuracy  : {0:.2f}".format(np.mean(acc_list))
+    print "Average Precision : {0:.2f}".format(np.mean(prc_list))
+    print "Average Recall    : {0:.2f}".format(np.mean(rec_list))
+    print "Average F1        : {0:.2f}".format(np.mean(f1_list ))
 
 
 if __name__ == '__main__':

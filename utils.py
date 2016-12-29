@@ -6,6 +6,8 @@
 # author: Wonchang Chung
 # date: 12/19/16
 
+from __future__ import division
+
 import sys
 import time
 import json
@@ -41,7 +43,7 @@ def progress_bar(current_step, total_step, graph_step=2.5):
     '''
 
     # calculate values
-    percent = round(current_step/float(total_step)*100,1)
+    percent = round(current_step/total_step*100,1)
     percent_bar = int(percent/graph_step)
 
     # displaying bar
@@ -524,14 +526,6 @@ def word_emb_avg(text, word_embedding_dict):
     # print ("porter stemmer :")
     # print text_for_emb
 
-    # text_for_emb = [lancaster_stemmer.stem(word) for word in text_for_emb]
-    # print ("lancaster stemmer :")
-    # print text_for_emb
-
-    # text_for_emb = [snowball_stemmer.stem(word) for word in text_for_emb]
-    # print ("snowball stemmer :")
-    # print text_for_emb
-
     # lemmatizing
     text_for_emb = [wordnet_lemmatizer.lemmatize(word) for word in text_for_emb]
 
@@ -553,77 +547,114 @@ def word_emb_avg(text, word_embedding_dict):
     wdemb_stack = wdemb_stack[1:]   # removing the dummy row
 
     # getting the averaged word embedding
-    wdemb_avg = np.mean(wdemb_stack.astype(np.float64), axis=0)
+    wdemb_avg = np.mean(wdemb_stack.astype(np.float32), axis=0)
 
     return wdemb_avg
 
 
-def evaluate(result,target):
+def evaluate(result, target, mode='binary', threshold, verbose=True):
 
-    comparison = zip(result,target)
+    total_count = len(result)
+    comparison_value = zip(result,target)
 
-    for i in range(len(comparison)):
-        print i, comparison[i]
+    if verbose: for i in range(total_count): print i, comparison_value[i]
 
-    print "----------------"
+    # binary classification
+    if   mode == 'binary':
+        threshold_hotnot = threshold[0]
+        result_hotnot = []
+        target_hotnot = []
+        hot_cnt = 0
 
-    # threshold for hot/not
-    cutline_hotnot = 10
+        for res in result:
+            if res >= threshold_hotnot: result_hotnot.append('++')
+            else: result_hotnot.append('__')
+        
+        for tgt in target:
+            if tgt >= threshold_hotnot:
+                target_hotnot.append('++')
+                hot_cnt += 1
+            else:
+                target_hotnot.append('__')
 
-    result_hotnot = []
+        comparison_hotnot = zip(result_hotnot, target_hotnot)
 
-    for res in result:
-        if res >= cutline_hotnot:
-            result_hotnot.append('++')
-        else:
-            result_hotnot.append('__')
+        print "Hot Ratio: {}".format(hot_cnt/total_count)
 
-    target_hotnot = []
+        # Complexity Matrix
+        TP, FP, TN, FN = 0, 0, 0, 0
+        for i in range(total_count):
+            # if verbose: print i, comparison_hotnot[i]
+            if   comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '++': TP += 1
+            elif comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '__': FP += 1
+            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '__': TN += 1
+            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '++': FN += 1
 
-    hot_cnt = 0
-    for tgt in target:
-        if tgt >= cutline_hotnot:
-            target_hotnot.append('++')
-            hot_cnt += 1
-        else:
-            target_hotnot.append('__')
+        acc = round((TP+TN)/total_count,2)
+        prc = round(TP/(TP+FP),2)
+        rec = round(TP/(TP+FN),2)
+        f1  = round(2*prc*rec/(prc+rec),2)
+        
+        if verbose :
+            print "TP: {}, FP: {}, TN: {}, FN: {}".format(TP, FP, TN, FN)
+            print "Accuracy : {}".format(acc)
+            print "Precision: {}".format(prc)
+            print "Recall   : {}".format(rec)
+            print "F1 score : {}".format(f1)
 
-    print "Hot Ratio: " + str(hot_cnt/float(len(target)))
-
-    comparison_hotnot = zip(result_hotnot, target_hotnot)
-
-
-    # Complexity Matrix
-
-    TP = 0.
-    FP = 0.
-    TN = 0.
-    FN = 0.
-
-    total_count = len(target)
-
-    for i in range(len(comparison_hotnot)):
-        print i, comparison_hotnot[i]
-        if   comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '++':
-            TP += 1
-        elif comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '__':
-            FP += 1
-        elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '__':
-            TN += 1
-        elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '++':
-            FN += 1
-
-    acc = round((TP+TN)/total_count,2)
-    prc = round(TP/(TP+FP),2)
-    rec = round(TP/(TP+FN),2)
-    f1  = round(2*prc*rec/(prc+rec),2)
-    
-    print TP, FP, TN, FN
-    print "Accuracy : " + str(acc)
-    print "Precision: " + str(prc)
-    print "Recall   : " + str(rec)
-    print "F1 score : " + str(f1)
-
-    return acc, prc, rec, f1
+        return acc, prc, rec, f1
 
 
+    # ternary classification
+    elif mode == 'ternary':
+        threshold_upper = max(threshold)
+        threshold_lower = min(threshold)
+        result_hml = []
+        target_hml = []
+        high_cnt, mid_cnt, low_cnt = 0, 0, 0
+
+        for res in result:
+            if   res >= threshold_upper: result_hml.append('++')
+            elif res >= threshold_lower: result_hml.append('//')
+            else: result_hml.append('__')
+        
+        for tgt in target:
+            if   tgt >= threshold_upper:
+                target_hml.append('++')
+                high_cnt += 1
+            elif tgt >= threshold_lower:
+                target_hml.append('//')
+                mid_cnt += 1
+            else:
+                target_hml.append('__')
+                low_cnt += 1
+
+        comparison_hml = zip(result_hml, target_hml)
+
+        print "High Ratio: {}".format(round(high_cnt/total_count,2))
+        print "Mid  Ratio: {}".format(round(mid_cnt/total_count,2))
+        print "Low  Ratio: {}".format(round(low_cnt/total_count,2))
+
+
+        # something like Complexity Matrix
+        TP, FP, TN, FN = 0, 0, 0, 0
+        for i in range(total_count):
+            # if verbose: print i, comparison_hotnot[i]
+            if   comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '++': TP += 1
+            elif comparison_hotnot[i][0] == '++' and comparison_hotnot[i][1] == '__': FP += 1
+            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '__': TN += 1
+            elif comparison_hotnot[i][0] == '__' and comparison_hotnot[i][1] == '++': FN += 1
+
+        acc = round((TP+TN)/total_count,2)
+        prc = round(TP/(TP+FP),2)
+        rec = round(TP/(TP+FN),2)
+        _   = None
+        
+        if verbose :
+            print "TP: {}, FP: {}, TN: {}, FN: {}".format(TP, FP, TN, FN)
+            print "Accuracy : {}".format(acc)
+            print "Precision: {}".format(prc)
+            print "Recall   : {}".format(rec)
+            print "F1 score : {}".format(f1)
+
+        return acc, prc, rec, _

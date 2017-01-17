@@ -127,18 +127,28 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     wdemb_title_matrix, wdemb_text_matrix = np.zeros(len_wdemb), np.zeros(len_wdemb)
     for i in range(len(articles_db)):
         if SHOW_PROG_BAR: progress_bar(i,len(articles_db)-1)
-        if articles_db[i]['relevant'] and ( articles_db[i]['comments'] > 0 or articles_db[i]['likes'] > 0):
-        # TODO : 여기에서 특정 신문사만 걸러낸다거나 특정 월만 걸러낸다거나 해보라
+        if articles_db[i]['facebook']:
 
             data_cnt_relev += 1
             new_dict_X, new_dict_Y = {}, {}
 
             art_title = articles_db[i]['title'] 
-            art_body  = (' ').join(articles_db[i]['text'].split('\n')[:NUM_SENT]) # first N sentences
+            art_body  = articles_db[i]['text']
+            art_body_head  = (' ').join(art_body.split('\n')[:NUM_SENT]) # first N sentences
+
+            # feature : money
+            pattern = re.compile('sh[0-9]')   # SH is money unit in Kenya
+            if pattern.search(art_title.lower()) or pattern.search(art_body_head.lower()):
+                new_dict_X['money'] = True
+            else:
+                new_dict_X['money'] = False
 
             # feature : keyword
             for j in range(10):
-                new_dict_X['keywd_{}'.format(j+1)] = articles_db[i]['keywords'].get(j,'')
+                try:
+                    new_dict_X['keywd_{}'.format(j+1)] = articles_db[i]['keywords'][j]
+                except:
+                    new_dict_X['keywd_{}'.format(j+1)] = ''
 
             # feature : sentiment (title)
             title = tb(art_title)
@@ -146,7 +156,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
 
             # feature : sentiment (body)
-            body = tb(art_body)
+            body = tb(art_body_head)
             new_dict_X['sent_body_pol'] = body.sentiment.polarity
             new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
 
@@ -193,7 +203,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             wdemb_title_matrix = np.vstack((wdemb_title_matrix, wdemb_avg_title))
 
             # feature : word embedding (body)
-            wdemb_avg_text = word_emb_avg(art_body), wdemb_dict)            
+            wdemb_avg_text = word_emb_avg(art_body_head, wdemb_dict)            
             wdemb_text_matrix = np.vstack((wdemb_text_matrix, wdemb_avg_text))
 
     wdemb_title_matrix = wdemb_title_matrix[1:]     # remove dummy first rows
@@ -225,9 +235,9 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     if  mode == 'binary':
         threshold = [10]
         for item in dict_Y:
-            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            num_likes_comments = item['num_likes']+item['num_comments']
             if num_likes_comments > threshold[0]:
-                val = 20
+                val = 100
             else:
                 val = 0
             dictvec_trn_Y.append(val)
@@ -236,18 +246,18 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
         threshold_upper = max(threshold)
         threshold_lower = min(threshold)
         for item in dict_Y:
-            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            num_likes_comments = item['num_likes']+item['num_comments']
             if   num_likes_comments > threshold_upper:
-                val = 40
+                val = 100
             elif num_likes_comments > threshold_lower:
-                val = 20
+                val = 50
             else:
                 val = 0
             dictvec_trn_Y.append(val)
     elif mode == 'regression':
         threshold = []
         for item in dict_Y:
-            num_likes_comments = max(item['num_likes'],-float('Inf'))+max(item['num_comments'],-float('Inf'))
+            num_likes_comments = item['num_likes']+item['num_comments']
             dictvec_trn_Y.append(num_likes_comments)
 
     # take care of NaN and INF
@@ -261,19 +271,12 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # clf = linear_model.Perceptron(n_jobs=-1)
     # clf = linear_model.Perceptron(penalty='l1',n_jobs=-1)
     # clf = linear_model.Perceptron(penalty='elasticnet',n_jobs=-1)
-    # clf = linear_model.Perceptron(n_jobs=-1)
-
-    # SVM linear
-    # clf = svm.LinearSVC()
 
     # SVC
-    # clf = svm.SVC(kernel='linear')                                # 이거 다메
-    # clf = svm.SVC(kernel='poly', degree=3, gamma=1/X_dim*10)      # 이건 동작 안함
-    # clf = svm.SVC(kernel='poly', probability=True, degree=3)      # 이것도 다메 SVM은 전반적으로 그냥 한 값으로 만들어버리네?
-    # clf = svm.SVC(kernel='rbf', gamma=1/X_dim*10)                 # 이건 동작 안함
-    # clf = svm.SVC(kernel='rbf', probability=True)                 # 이거 다메
-    # clf = svm.SVC(kernel='sigmoid')                               # 이거 다메
-    # clf = svm.SVC(kernel='precomputed')                           # 이거 동작 안함
+    # clf = svm.SVC(kernel='linear')
+    # clf = svm.SVC(kernel='poly', probability=True, degree=3)
+    # clf = svm.SVC(kernel='rbf', probability=True)
+    # clf = svm.SVC(kernel='sigmoid')
 
     # SVR
     # clf = svm.SVR(kernel='linear')
@@ -299,8 +302,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # clf = ensemble.AdaBoostClassifier()
 
     # KNN
-    #   이거는 거의 값을 0으로 만들어 버린다 안될 듯
-    # clf = neighbors.KNeighborsClassifier()
+    # clf = neighbors.KNeighborsClassifier(n_neighbors=2)
 
     # Naive Bayes
     # clf = naive_bayes.GaussianNB()
@@ -352,13 +354,15 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
 if __name__ == '__main__':
 
-    URL_FILES = ['url_more.txt']
-    OUTPUT_FILE = 'articles_db_drought_the_star.json'
+    # URL_FILES = ['url_more.txt']
+    # OUTPUT_FILE = 'articles_db_drought_the_star.json'
 
-    extract_json_from_news_urls(URL_FILES, OUTPUT_FILE)
+    # extract_json_from_news_urls(URL_FILES, OUTPUT_FILE)
 
     # -------------
 
-    # ARTICLE_FILE = 'articles_db_all.json'
+    ARTICLE_FILE = 'articles_db_all.json'
 
-    # predict_popularity(ARTICLE_FILE, mode='binary')
+    predict_popularity(ARTICLE_FILE, mode='binary')
+
+

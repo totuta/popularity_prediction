@@ -663,14 +663,15 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
     # regression
     elif mode  == 'regression':
         
-        percentage = [int(100*pair[0]/pair[1]) for pair in comparison_value]
+        # percentage = [int(100*pair[0]/pair[1]) for pair in comparison_value]
         
-        if verbose: print percentage
+        # if verbose: print percentage
 
-        acc = np.mean(percentage)
+        # acc = np.mean(percentage)
+        acc = 0
         _   = None
 
-        print "Average (percentage) accuracy: {0:.2f}".format(np.mean(percentage))
+        # print "Average (percentage) accuracy: {0:.2f}".format(np.mean(percentage))
 
         return acc, _, _, _
 

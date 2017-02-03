@@ -11,17 +11,13 @@
 from utils import *
 
 import numpy as np
-
 import time
 import json
-
 import nltk
 import inflection
 from textblob import TextBlob as tb
 import newspaper
 from newspaper import Article
-
-# scikit-learn family
 from sklearn import svm, linear_model, cluster, neighbors, tree, ensemble, naive_bayes
 from sklearn import cross_validation
 from sklearn.feature_extraction import DictVectorizer
@@ -33,7 +29,6 @@ WDEMB_PATH = 'data/'
 WDEMB_FILE = 'glove.6B.50d.txt'
 
 SHOW_PROG_BAR = True
-
 
 def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     '''
@@ -85,7 +80,7 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
 
     # write to output file
     with open(DATA_PATH + OUTPUT_FILE, 'w') as outFile:
-        outFile.write(json.dumps(article_list))
+        outFile.write(json.dumps(article_list, indent=4))
 
 
 def predict_popularity(ARTICLE_FILE, mode='binary'):
@@ -263,6 +258,15 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # take care of NaN and INF
     dictvec_trn_X = np.nan_to_num(dictvec_trn_X)
     dictvec_trn_Y = np.nan_to_num(dictvec_trn_Y)
+
+
+    #----------------
+    print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
+    from tsne import *
+    Y = tsne(dict_vec_trn_X, 2, 50, 20.0)
+    plt.scatter(Y[:,0], Y[:,1], 20, dictvec_trn_Y)
+    plt.show();
+    #----------------
 
 
     # choose classifier

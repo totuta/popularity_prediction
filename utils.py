@@ -7,28 +7,24 @@
 # date: 12/19/16
 
 from __future__ import division
+import sys, time, re, signal, json
 
-import sys
-import time
-import json
 import numpy as np
-import newspaper
-from newspaper import Article
 
 import nltk
-from nltk.corpus import stopwords
-# from nltk.stem.porter import PorterStemmer
-# porter_stemmer = PorterStemmer()
+from nltk.corpus import stopwords, wordnet
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.snowball import SnowballStemmer
 from nltk.stem import WordNetLemmatizer
 wordnet_lemmatizer = WordNetLemmatizer()
 import inflection
-
-import urlunshort
-import urlparse
-import re
-import signal
+import urlunshort, urlparse
 
 from sklearn.metrics.pairwise import cosine_similarity
+
+import newspaper
+from newspaper import Article
 
 
 def progress_bar(current_step, total_step, graph_step=2.5):
@@ -476,7 +472,6 @@ def count_tweets():
     outFile.close()
 
 
-
 def get_n_closest(vector, N=5):
 
     n_closest = []
@@ -511,6 +506,46 @@ def get_n_closest(vector, N=5):
 
     return n_closest 
 
+
+def normalized(text, 
+               remove_punc=False, 
+               remove_stops=False, 
+               singularize=False,
+               stem="none", 
+               lemmatize=False):
+
+    stops = stopwords.words('english')
+    stops.extend(['said','many','must','also'])
+
+    words = nltk.pos_tag(text.lower().split())
+
+    if remove_punc:
+        words = [(word[0].strip('"~`!?<>{}[]+=@#$%^&*.,:;-_)(/\'|'), word[1]) for word in words]
+        words = [(word[0].replace("'s",""), word[1]) for word in words]
+
+    if remove_stops:
+        words = [word for word in words if word[0] not in stops]
+
+    if singularize:
+        words = [(inflection.singularize(word[0]), word[1]) for word in words]
+    
+    if stem != "none":
+        if   stem == "porter":
+            stemmer = PorterStemmer()  
+        elif stem == "lancaster":
+            stemmer = LancasterStemmer()  
+        elif stem == "snowball":
+            stemmer = nltk.SnowballStemmer("english")
+        words = [(stemmer.stem(word[0]), word[1]) for word in words]
+
+    if lemmatize:
+        lemmatizer = WordNetLemmatizer()
+        pos_dict = {'J': wordnet.ADJ, 'V': wordnet.VERB, 'N': wordnet.NOUN, 'R': wordnet.ADV}
+        words = [(lemmatizer.lemmatize(word[0], pos_dict.get(word[1][0],wordnet.NOUN)), word[1]) for word in words]
+
+    words = [word[0] for word in words]
+
+    return (' ').join(words)
 
 
 def word_emb_avg(text, word_embedding_dict):

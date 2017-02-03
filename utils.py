@@ -474,7 +474,7 @@ def normalized(text,
                lemmatize=False):
 
     stops = stopwords.words('english')
-    stops.extend(['said','many','must','also'])
+    stops.extend(['said','many','must','also']) # add some more words to nltk stopwords
 
     words = nltk.pos_tag(text.lower().split())
 
@@ -509,52 +509,28 @@ def normalized(text,
 
 def word_emb_avg(text, word_embedding_dict):
 
-    # tokenizing text
-    text_for_emb = nltk.word_tokenize(text)
+    words = nltk.word_tokenize(text.lower())
+    words = [word for word in words if word not in stopwords.words('english')]  # remove stopwords
 
-    # removing stopwords
-    text_for_emb = [word for word in text_for_emb if word not in stopwords.words('english')]
-
-    # # stemming
-    # text_for_emb = [porter_stemmer.stem(word) for word in text_for_emb]
-    # print ("porter stemmer :")
-    # print text_for_emb
-
-    # lemmatizing
-    text_for_emb = [wordnet_lemmatizer.lemmatize(word) for word in text_for_emb]
-
-    # singularizing
-    text_for_emb = [inflection.singularize(word) for word in text_for_emb]
-
-    # lowercasing
-    text_for_emb = [word.lower() for word in text_for_emb]
-
-    wdemb_stack = np.zeros(len(word_embedding_dict['the']))  # a dummy row for using np.vstack
-
-    # stacking word embeddings
-    for word in text_for_emb:
-        try:
+    # average
+    wdemb_stack = np.zeros(len(word_embedding_dict['the']))  # initialize with dummy
+    for word in words:
+        if word in word_embedding_dict:
             wdemb_stack = np.vstack((wdemb_stack, word_embedding_dict[word]))
-        except KeyError:
-            pass
-
-    wdemb_stack = wdemb_stack[1:]   # removing the dummy row
-
-    # getting the averaged word embedding
+    wdemb_stack = wdemb_stack[1:]   # remove first dummy
     wdemb_avg = np.mean(wdemb_stack.astype(np.float32), axis=0)
 
     return wdemb_avg
 
 
 def evaluate(result, target, threshold, mode='binary', verbose=True):
-
     total_count = len(result)
-    comparison_value = zip(result,target)
+    comparison = zip(result,target)
 
+    # show prediction and target pairs
     if verbose:
-        for i in range(total_count): print i, comparison_value[i]
+        for i in range(total_count): print i, comparison[i]
 
-    # binary classification
     if   mode == 'binary':
         threshold_hotnot = threshold[0]
         result_hotnot = []
@@ -600,7 +576,6 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
         return acc, prc, rec, f1
 
 
-    # ternary classification
     elif mode == 'ternary':
         threshold_upper = max(threshold)
         threshold_lower = min(threshold)
@@ -654,10 +629,9 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
 
         return acc, _, _, _
 
-    # regression
     elif mode  == 'regression':
         
-        # percentage = [int(100*pair[0]/pair[1]) for pair in comparison_value]
+        # percentage = [int(100*pair[0]/pair[1]) for pair in comparison]
         
         # if verbose: print percentage
 

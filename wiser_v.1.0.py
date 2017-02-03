@@ -38,7 +38,7 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     article_list = []
     for URL_FILE in URL_FILES:
         # load news article URLs
-        with open(DATA_PATH + URL_FILE, 'r') as inFile:
+        open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
         # read each URL
         for idx, url in enumerate(dataset):

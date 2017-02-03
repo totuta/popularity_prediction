@@ -38,19 +38,15 @@ def progress_bar(current_step, total_step, graph_step=2.5):
     graph_step : one unit(in percentage) in the progress bar
     '''
 
-    # calculate values
     percent = round(current_step/total_step*100,1)
     percent_bar = int(percent/graph_step)
 
-    # displaying bar
+    # display
     sys.stdout.write('\r')
     sys.stdout.write('[')
-    for i in range(percent_bar):
-        sys.stdout.write('=')
-    if percent < 100:
-        sys.stdout.write('>')
-    for i in range(int(100/graph_step-1-percent_bar)):
-        sys.stdout.write('.')
+    for i in range(percent_bar): sys.stdout.write('=')
+    if percent < 100: sys.stdout.write('>')
+    for i in range(int(100/graph_step-1-percent_bar)): sys.stdout.write('.')
     sys.stdout.write(']')
     sys.stdout.write('   '+str(current_step)+'/'+str(total_step)+'    '+str(percent)+'%')
     sys.stdout.flush() # important
@@ -70,40 +66,23 @@ signal.signal(signal.SIGALRM, timeout_handler)
 
 
 def extract_json_from_news_urls():
-    '''
-    extract json from news articles
-    '''
 
-    # initiate a list for making .json
     article_list = []
-
     for URL_FILE in URL_FILES:
+        with open(DATA_PATH + URL_FILE, 'r') as inFile: # load news article url file
+            dataset = inFile.readlines()
 
-        # load news article url file
-        inFile = open(DATA_PATH + URL_FILE, 'r')
-        dataset = inFile.readlines()
-        inFile.close()
-
-        i = 0
-
-        for url in dataset:
-            i += 1
+        for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
-                
                 article_dict = {}
-
-                print "---------------------------------------------"
-                art = Article(url.strip())          # don't need to strip '\n'?
+                print "{}/{} : {}\r".format(idx,len(dataset),art.title)
+                art = Article(url.strip())
                 art.download()
                 art.parse()
                 try:
                     art.nlp()
                 except newspaper.article.ArticleException:
                     print "NLP ERROR\n"
-                # print art.url
-                print str(i)+"/"+str(len(dataset))+" : "+art.title + "\r"
-                # sys.stdout.flush()
-                # print art.text[:100]
 
                 article_dict['url'] = art.url
                 article_dict['media'] = None
@@ -111,10 +90,8 @@ def extract_json_from_news_urls():
                 article_dict['title'] = art.title
                 article_dict['author'] = art.authors
                 article_dict['text'] = art.text
-
                 article_dict['summary'] = art.summary
                 article_dict['keywords'] = art.keywords
-
                 article_dict["category"] = None
                 article_dict["rt"]  = None
                 article_dict["relevant"]  = None
@@ -128,19 +105,10 @@ def extract_json_from_news_urls():
                 article_dict["tweets"]  = None
                 article_dict["search_keyword"]  = URL_FILE[4:-4]
 
-                # print article_dict
-
                 article_list.append(article_dict)
 
-        # print article_list
-        print "---------------------------------------------"
-
-    # print json.dumps(article_list)
-
-    # print article_list
-    outFile = open(DATA_PATH + OUTPUT_FILE, 'w')
-    outFile.write(json.dumps(article_list))
-    outFile.close()
+    with open(DATA_PATH + OUTPUT_FILE, 'w') as outFile:
+        outFile.write(json.dumps(article_list))
 
 
 def extract_json():
@@ -159,7 +127,6 @@ def extract_json():
     temp_json = json.load(inFile)
     inFile.close()
 
-
     KEY_JSON = 'tweets_elnino_0125-0501'
     # KEY_JSON = 'tweets_lanina_0211-0429'
 
@@ -168,21 +135,15 @@ def extract_json():
 
     # check every json entries one by one
     while len(temp_json[KEY_JSON]) != 0:
-
-        # pop the first element of json
         poppy = temp_json[KEY_JSON].pop(0)
-
         tweet_temp = {}
         tweet_temp['text'] = poppy['text'].encode('utf-8')
         tweet_temp['urls'] = None
         tweet_temp['rt']   = 0
-
         tweet_dict[KEY_JSON].append(tweet_temp)
 
-    outFile = open(OUT_FILE,'w')
-    # outFile.write(poppy['text'].encode('utf-8') + '\n')
-    outFile.write(json.dumps(tweet_dict, indent = 4))
-    outFile.close()
+    with open(OUT_FILE,'w') as outFile:
+        outFile.write(json.dumps(tweet_dict, indent = 4))
 
 
 def extract_url(data_path, tweet_file):
@@ -202,11 +163,9 @@ def extract_url(data_path, tweet_file):
     OUT_FILE = tweet_file
 
     print "loading simple tweets file..."
-    inFile = open(DATA_PATH + TWEET_FILE, 'r')
-    temp_json = json.load(inFile)
-    inFile.close()
+    with open(DATA_PATH + TWEET_FILE, 'r') as inFile:
+        temp_json = json.load(inFile)
     print "loading simple tweets - done."
-
 
     # KEY_JSON = 'tweets_elnino_0125-0501'
     # KEY_JSON = 'tweets_lanina_0211-0429'

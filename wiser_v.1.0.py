@@ -100,14 +100,14 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     # get glove vectors
     glove_dict = load_glove_vectors(GLOVE_PATH, GLOVE_FILE)
-    glove_len  = len(glove_dict['the'])
+    glove_len = len(glove_dict['the'])
 
     # make training data(vectors)
     print "extracting features..."
 
     NUM_SENT = 3  # first N sentences of article body to be used
-    data_cnt_relev  = 0
-    dict_X, dict_Y  = [], []
+    data_cnt_relev = 0
+    dict_X, dict_Y = [], []
     glove_title_matrix, glove_body_matrix = np.zeros(glove_len), np.zeros(glove_len)
 
     for i in range(len(articles_db)):
@@ -133,8 +133,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
             # sentiment (body)
             body  = tb(art_body_head)
-            new_dict_X['sent_body_pol']  = body.sentiment.polarity
-            new_dict_X['sent_body_sbj']  = body.sentiment.subjectivity
+            new_dict_X['sent_body_pol'] = body.sentiment.polarity
+            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
 
             # ---------------------
             # categorical features
@@ -160,7 +160,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             for unigram in ngrams(title_tokens, 1):
                 new_dict_X['uni_title_{}'.format(unigram)] = True
             for bigram  in ngrams(title_tokens, 2):
-                new_dict_X['bi_title_{}'.format(bigram)]   = True
+                new_dict_X['bi_title_{}'.format(bigram)] = True
             for trigram in ngrams(title_tokens, 3):
                 new_dict_X['tri_title_{}'.format(trigram)] = True
 
@@ -169,7 +169,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             for unigram in ngrams(body_tokens, 1):
                 new_dict_X['uni_body_{}'.format(unigram)] = True
             for bigram  in ngrams(body_tokens, 2):
-                new_dict_X['bi_body_{}'.format(bigram)]   = True
+                new_dict_X['bi_body_{}'.format(bigram)] = True
             for trigram in ngrams(body_tokens, 3):
                 new_dict_X['tri_body_{}'.format(trigram)] = True
 
@@ -218,13 +218,13 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     dictvec_trn_X = vectorizer_X.fit_transform(dict_X).toarray()
 
     # add word embedding as a feature
-    classic_wgt     = 1.0    # weights for classic features
+    classic_wgt = 1.0    # weights for classic features
     glove_title_wgt = 1.0    # weights for word embeddings
-    glove_body_wgt  = 1.0
+    glove_body_wgt = 1.0
 
     # concatenate word embedding to vectorized features
     glove_title_matrix = glove_title_matrix[1:]     # remove dummy first rows
-    glove_body_matrix  = glove_body_matrix[1:]
+    glove_body_matrix = glove_body_matrix[1:]
 
     dictvec_trn_X = np.hstack((dictvec_trn_X * classic_wgt,
                                glove_title_matrix * glove_title_wgt,
@@ -332,8 +332,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
         train_index, test_index = indices[0], indices[1]
         train_X = [dictvec_trn_X[ind] for ind in train_index]
         train_Y = [dictvec_trn_Y[ind] for ind in train_index]
-        test_X  = [dictvec_trn_X[ind] for ind in test_index]
-        test_Y  = [dictvec_trn_Y[ind] for ind in test_index]
+        test_X = [dictvec_trn_X[ind] for ind in test_index]
+        test_Y = [dictvec_trn_Y[ind] for ind in test_index]
 
         print "---------------"
         print "iteration: {}".format(i+1)

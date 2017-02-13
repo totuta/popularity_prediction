@@ -146,7 +146,7 @@ def extract_json():
         tweet_temp = {}
         tweet_temp['text'] = poppy['text'].encode('utf-8')
         tweet_temp['urls'] = None
-        tweet_temp['rt']   = 0
+        tweet_temp['rt'] = 0
         tweet_dict[KEY_JSON].append(tweet_temp)
 
     with open(OUT_FILE,'w') as outFile:
@@ -170,7 +170,7 @@ def extract_url(data_path, tweet_file):
     OUT_FILE = tweet_file
 
     print "loading simple tweets file..."
-    with open(DATA_PATH + TWEET_FILE, 'r') as inFile:
+    with open(DATA_PATH + TWEET_FILE, 'r') as inFile: 
         temp_json = json.load(inFile)
     print "loading simple tweets - done."
 

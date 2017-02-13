@@ -7,21 +7,29 @@
 # date: 12/19/16
 
 from __future__ import division
-import sys, time, re, signal, json
+
+import sys
+import time
+import re
+import signal
+import json
 
 import numpy as np
+from scipy.stats.stats import pearsonr
 
 import nltk
-from nltk.corpus import stopwords, wordnet
-from nltk.stem.porter import PorterStemmer
-from nltk.stem.lancaster import LancasterStemmer
-from nltk.stem.snowball import SnowballStemmer
+from nltk.corpus import stopwords
+from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
-wordnet_lemmatizer = WordNetLemmatizer()
-import inflection
-import urlunshort, urlparse
+from nltk.stem.lancaster import LancasterStemmer
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
 
 from sklearn.metrics.pairwise import cosine_similarity
+
+import inflection
+import urlunshort
+import urlparse
 
 import newspaper
 from newspaper import Article
@@ -71,11 +79,10 @@ def extract_json_from_news_urls():
     for URL_FILE in URL_FILES:
         with open(DATA_PATH + URL_FILE, 'r') as inFile: # load news article url file
             dataset = inFile.readlines()
-
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
                 article_dict = {}
-                print "{}/{} : {}\r".format(idx,len(dataset),art.title)
+                print "{}/{} : {}\r".format(idx+1,len(dataset),art.title)
                 art = Article(url.strip())
                 art.download()
                 art.parse()
@@ -108,7 +115,7 @@ def extract_json_from_news_urls():
                 article_list.append(article_dict)
 
     with open(DATA_PATH + OUTPUT_FILE, 'w') as outFile:
-        outFile.write(json.dumps(article_list))
+        outFile.write(json.dumps(article_list, indent=4))
 
 
 def extract_json():
@@ -505,6 +512,19 @@ def normalized(text,
     words = [word[0] for word in words]
 
     return (' ').join(words)
+
+
+def load_glove_vectors(PATH, FILE):
+    print "loading Word Embedding..."
+    with open(PATH + FILE, 'r') as infile:
+        gloveset = infile.readlines()
+    itemized_glove = [item.split() for item in gloveset]
+    glove_dict = {}
+    for idx, vec in enumerate(itemized_glove):
+        glove_dict[vec[0]] = np.asarray(vec[1:], dtype=np.float32) # cast as float 32, which is the format of GloVe
+    print "done."
+
+    return glove_dict
 
 
 def word_emb_avg(text, word_embedding_dict):

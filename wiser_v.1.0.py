@@ -8,39 +8,52 @@
 # author: Wonchang Chung
 # date: 10/25/16
 
-from utils import *
 
-import numpy as np
 import time
 import json
+
+import numpy as np
+
 import nltk
+from nltk.util import ngrams
+
+from sklearn import cluster
+from sklearn import cross_validation
+from sklearn import ensemble
+from sklearn import linear_model
+from sklearn import naive_bayes
+from sklearn import neighbors
+from sklearn import svm
+from sklearn import tree
+from sklearn.feature_extraction import DictVectorizer
+
+import gensim
+from gensim import corpora
+from gensim import models
+from gensim import similarities
+from gensim.models.ldamodel import LdaModel
+from gensim.models.lsimodel import LsiModel
+
 import inflection
 from textblob import TextBlob as tb
 import newspaper
 from newspaper import Article
-from sklearn import svm, linear_model, cluster, neighbors, tree, ensemble, naive_bayes
-from sklearn import cross_validation
-from sklearn.feature_extraction import DictVectorizer
 
-DATA_PATH = 'data/'
+from utils import *
 
-# GloVe word embedding
-WDEMB_PATH = 'data/'
-WDEMB_FILE = 'glove.6B.50d.txt'
+
+DATA_PATH  = 'data/'
+GLOVE_PATH = 'data/'
+GLOVE_FILE = 'glove.6B.50d.txt'
 
 SHOW_PROG_BAR = True
 
-def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
-    '''
-    extract JSON from news articles
-    '''
 
+def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     article_list = []
     for URL_FILE in URL_FILES:
-        # load news article URLs
         open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
-        # read each URL
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
                 article_dict = {}
@@ -58,17 +71,13 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
                 article_dict['title'] = art.title
                 article_dict['author'] = art.authors
                 article_dict['text'] = art.text
-
                 article_dict['summary'] = art.summary
                 article_dict['keywords'] = art.keywords
                 article_dict["relevant"]  = True
-
                 article_dict["facebook"]  = True
                 article_dict["likes"]  = None
                 article_dict["comments"]  = None
-
                 article_dict["category"] = None
-
                 article_dict["tweets"]  = None
                 article_dict["rt"]  = None
                 article_dict["sentiment"]  = None
@@ -78,136 +87,128 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
 
                 article_list.append(article_dict)
 
-    # write to output file
     with open(DATA_PATH + OUTPUT_FILE, 'w') as outFile:
         outFile.write(json.dumps(article_list, indent=4))
 
 
 def predict_popularity(ARTICLE_FILE, mode='binary'):
-    '''
-    load JSON data
-    and
-    predict popularity of each news articles in Facebook
-    '''
-    
-    DATA_PATH = 'data/'
 
-    # load raw data in JSON format
-    print "loading articles db file..."
+    # get articles
     with open(DATA_PATH + ARTICLE_FILE, 'r') as inFile:
         articles_db = json.load(inFile)
-    print "  total number of articles: {}".format(len(articles_db))
+    print "total number of articles: {}".format(len(articles_db))
 
-    # load word embedding
-    print "loading Word Embedding..."
-    with open(WDEMB_PATH + WDEMB_FILE, 'r') as infile:
-        wdembset = infile.readlines()
-    itemized_wdemb = [item.split() for item in wdembset]
-    wdemb_dict = {}
-    for idx, vec in enumerate(itemized_wdemb):
-        if SHOW_PROG_BAR: progress_bar(idx,len(itemized_wdemb))
-        wdemb_dict[vec[0]] = np.asarray(vec[1:], dtype=np.float32) # cast as float 32, which is the format of GloVe
-    print ""
-
+    # get glove vectors
+    glove_dict = load_glove_vectors(GLOVE_PATH, GLOVE_FILE)
+    glove_len  = len(glove_dict['the'])
 
     # make training data(vectors)
     print "extracting features..."
 
-    # first N sentences of article body to be used
-    NUM_SENT = 3
-
+    NUM_SENT = 3  # first N sentences of article body to be used
     data_cnt_relev  = 0
     dict_X, dict_Y  = [], []
-    len_wdemb = len(wdemb_dict['the'])
-    wdemb_title_matrix, wdemb_text_matrix = np.zeros(len_wdemb), np.zeros(len_wdemb)
+    glove_title_matrix, glove_body_matrix = np.zeros(glove_len), np.zeros(glove_len)
+
     for i in range(len(articles_db)):
         if SHOW_PROG_BAR: progress_bar(i,len(articles_db)-1)
-        if articles_db[i]['facebook']:
 
+        article = articles_db[i]
+        if article['facebook']: # only use facebook articles
             data_cnt_relev += 1
             new_dict_X, new_dict_Y = {}, {}
 
-            art_title = articles_db[i]['title'] 
-            art_body  = articles_db[i]['text']
+            art_title = article['title'] 
+            art_body  = article['text']
             art_body_head  = (' ').join(art_body.split('\n')[:NUM_SENT]) # first N sentences
 
-            # feature : money
+            # ---------------------
+            # numerical features
+            # ---------------------
+
+            # sentiment (title)
+            title = tb(art_title)
+            new_dict_X['sent_title_pol'] = title.sentiment.polarity
+            new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
+
+            # sentiment (body)
+            body  = tb(art_body_head)
+            new_dict_X['sent_body_pol']  = body.sentiment.polarity
+            new_dict_X['sent_body_sbj']  = body.sentiment.subjectivity
+
+            # ---------------------
+            # categorical features
+            # ---------------------
+
+            # money
             pattern = re.compile('sh[0-9]')   # SH is money unit in Kenya
             if pattern.search(art_title.lower()) or pattern.search(art_body_head.lower()):
                 new_dict_X['money'] = True
             else:
                 new_dict_X['money'] = False
 
-            # feature : keyword
-            for j in range(10):
-                try:
-                    new_dict_X['keywd_{}'.format(j+1)] = articles_db[i]['keywords'][j]
-                except:
-                    new_dict_X['keywd_{}'.format(j+1)] = ''
+            # keyword
+            art_keywords = article['keywords']
+            for j in range(len(art_keywords)):
+                new_dict_X['keywd_{}'.format(art_keywords[j])] = True
 
-            # feature : sentiment (title)
-            title = tb(art_title)
-            new_dict_X['sent_title_pol'] = title.sentiment.polarity
-            new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
+            # media
+            new_dict_X['media_{}'.format(article['media'])] = True
 
-            # feature : sentiment (body)
-            body = tb(art_body_head)
-            new_dict_X['sent_body_pol'] = body.sentiment.polarity
-            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
+            # n-grams (title)
+            title_tokens = nltk.word_tokenize(art_title)
+            for unigram in ngrams(title_tokens, 1):
+                new_dict_X['uni_title_{}'.format(unigram)] = True
+            for bigram  in ngrams(title_tokens, 2):
+                new_dict_X['bi_title_{}'.format(bigram)]   = True
+            for trigram in ngrams(title_tokens, 3):
+                new_dict_X['tri_title_{}'.format(trigram)] = True
 
-            # feature : media
-            new_dict_X['media'] = articles_db[i]['media']
+            # n-grams (body)
+            body_tokens = nltk.word_tokenize(art_body)
+            for unigram in ngrams(body_tokens, 1):
+                new_dict_X['uni_body_{}'.format(unigram)] = True
+            for bigram  in ngrams(body_tokens, 2):
+                new_dict_X['bi_body_{}'.format(bigram)]   = True
+            for trigram in ngrams(body_tokens, 3):
+                new_dict_X['tri_body_{}'.format(trigram)] = True
 
-            # feature : n-grams (title)
-            title_uni = nltk.word_tokenize(art_title)
-            for unigram in title_uni:
-                new_dict_X['uni_title_' + unigram] = True
-            title_bi  = [(title_uni[j], title_uni[j+1]) for j in range(len(title_uni)-1)]
-            for bigram in title_bi:
-                new_dict_X['bi_title_' + bigram[0] + '_' + bigram[1]] = True
-            title_tri = [(title_uni[j], title_uni[j+1], title_uni[j+2]) for j in range(len(title_uni)-2)]
-            for trigram in title_tri:
-                new_dict_X['tri_title_' + trigram[0] + '_' + trigram[1] + '_' + trigram[2]] = True
+            # year & month
+            new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
 
-            # feature : n-grams (body)
-            text_uni = nltk.word_tokenize(art_body)
-            for unigram in text_uni:
-                new_dict_X['uni_text_' + unigram] = True
-            text_bi  = [(text_uni[j], text_uni[j+1]) for j in range(len(text_uni)-1)]
-            for bigram in text_bi:
-                new_dict_X['bi_text_' + bigram[0] + '_' + bigram[1]] = True
-            text_tri = [(text_uni[j], text_uni[j+1], text_uni[j+2]) for j in range(len(text_uni)-2)]
-            for trigram in text_tri:
-                new_dict_X['tri_text_' + trigram[0] + '_' + trigram[1] + '_' + trigram[2]] = True
+            # ---------------------
+            # vector features
+            # ---------------------
 
-            # feature : year & month
-            new_dict_X['date'] = articles_db[i].get('datePublished','')[:7]
+            # average glove vector (title)
+            glove_avg_title = word_emb_avg(art_title, glove_dict)
+            glove_title_matrix = np.vstack((glove_title_matrix, glove_avg_title))
+
+            # average glove vector (body)
+            glove_avg_text = word_emb_avg(art_body_head, glove_dict)            
+            glove_body_matrix = np.vstack((glove_body_matrix, glove_avg_text))
+
             
+            # ---------------------
+            # targets
+            # ---------------------
+
             # target : number of likes
-            new_dict_Y['num_likes'] = articles_db[i].get('likes',0)
+            new_dict_Y['num_likes'] = article.get('likes',0)
 
             # target : number of comments
-            new_dict_Y['num_comments'] = articles_db[i].get('comments',0)
+            new_dict_Y['num_comments'] = article.get('comments',0)
+
+
 
             # make a big list of dicts for sklearn DictVectorizer
             dict_X.append(new_dict_X)
             dict_Y.append(new_dict_Y)
 
-            # feature : word embedding (title)
-            wdemb_avg_title = word_emb_avg(art_title, wdemb_dict)
-            wdemb_title_matrix = np.vstack((wdemb_title_matrix, wdemb_avg_title))
-
-            # feature : word embedding (body)
-            wdemb_avg_text = word_emb_avg(art_body_head, wdemb_dict)            
-            wdemb_text_matrix = np.vstack((wdemb_text_matrix, wdemb_avg_text))
-
-    wdemb_title_matrix = wdemb_title_matrix[1:]     # remove dummy first rows
-    wdemb_text_matrix  = wdemb_text_matrix[1:]
-
     # print total time to run this part
     print ""
-    print "Total Data Count    : {}".format(data_cnt_relev)
-    print "Total Irrelevants   : {}".format(len(articles_db)-data_cnt_relev)
+    print "Total Relevant   Counts : {}".format(data_cnt_relev)
+    print "Total Irrelevant Counts : {}".format(len(articles_db)-data_cnt_relev)
     print "--------------------------------------"
 
 
@@ -218,13 +219,16 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     # add word embedding as a feature
     classic_wgt     = 1.0    # weights for classic features
-    wdemb_title_wgt = 1.0    # weights for word embeddings
-    wdemb_text_wgt  = 1.0
+    glove_title_wgt = 1.0    # weights for word embeddings
+    glove_body_wgt  = 1.0
 
     # concatenate word embedding to vectorized features
+    glove_title_matrix = glove_title_matrix[1:]     # remove dummy first rows
+    glove_body_matrix  = glove_body_matrix[1:]
+
     dictvec_trn_X = np.hstack((dictvec_trn_X * classic_wgt,
-                               wdemb_title_matrix * wdemb_title_wgt,
-                               wdemb_text_matrix * wdemb_text_wgt))
+                               glove_title_matrix * glove_title_wgt,
+                               glove_body_matrix * glove_body_wgt))
     # preparing targets
     dictvec_trn_Y = []
     if  mode == 'binary':
@@ -356,17 +360,15 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
         print "Average F1        : {0:.2f}".format(np.mean(f1_list ))
 
 
-if __name__ == '__main__':
-
+def main():
     # URL_FILES = ['url_more.txt']
     # OUTPUT_FILE = 'articles_db_drought_the_star.json'
-
     # extract_json_from_news_urls(URL_FILES, OUTPUT_FILE)
-
     # -------------
-
     ARTICLE_FILE = 'articles_db_all.json'
-
     predict_popularity(ARTICLE_FILE, mode='binary')
 
 
+if __name__ == '__main__':
+
+    main()

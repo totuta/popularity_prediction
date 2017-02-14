@@ -57,14 +57,16 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
                 article_dict = {}
-                art = Article(url.strip())          # don't need to strip '\n'?
+                art = Article(url.strip()) # don't need to strip '\n'?
                 art.download()
                 art.parse()
                 try:
                     art.nlp()
                 except newspaper.article.ArticleException:
                     print "NLP ERROR\n"
-                print "{}/{} : {}".format(idx+1,len(dataset),art.title.encode('utf-8'))
+                print "{}/{} : {}".format(idx+1, 
+                                          len(dataset), 
+                                          art.title.encode('utf-8'))
 
                 article_dict['url'] = art.url
                 article_dict['datePublished'] = str(art.publish_date)
@@ -346,7 +348,11 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
         result = clf.predict(test_X)
 
         # evaluate
-        acc, prc, rec, f1 = evaluate(result, test_Y, threshold=threshold , mode=mode, verbose=True)
+        acc, prc, rec, f1 = evaluate(result, 
+                                     test_Y, 
+                                     threshold=threshold, 
+                                     mode=mode, 
+                                     verbose=True)
         acc_list.append(acc)
         prc_list.append(prc)
         rec_list.append(rec)

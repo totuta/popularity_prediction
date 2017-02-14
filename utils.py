@@ -46,17 +46,18 @@ def progress_bar(current_step, total_step, graph_step=2.5):
     graph_step : one unit(in percentage) in the progress bar
     '''
 
-    percent = round(current_step/total_step*100,1)
-    percent_bar = int(percent/graph_step)
+    percent = round(current_step / total_step * 100, 1)
+    percent_bar = int(percent / graph_step)
 
     # display
     sys.stdout.write('\r')
     sys.stdout.write('[')
     for i in range(percent_bar): sys.stdout.write('=')
     if percent < 100: sys.stdout.write('>')
-    for i in range(int(100/graph_step-1-percent_bar)): sys.stdout.write('.')
+    for i in range(int(100 / graph_step - 1 - percent_bar)): sys.stdout.write('.')
     sys.stdout.write(']')
-    sys.stdout.write('   '+str(current_step)+'/'+str(total_step)+'    '+str(percent)+'%')
+    sys.stdout.write('   ' + str(current_step) + '/' + str(total_step) + '    '
+                     + str(percent)+'%')
     sys.stdout.flush() # important
 
 
@@ -77,12 +78,12 @@ def extract_json_from_news_urls():
 
     article_list = []
     for URL_FILE in URL_FILES:
-        with open(DATA_PATH + URL_FILE, 'r') as inFile: # load news article url file
+        with open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
                 article_dict = {}
-                print "{}/{} : {}\r".format(idx+1,len(dataset),art.title)
+                print "{}/{} : {}\r".format(idx + 1, len(dataset), art.title)
                 art = Article(url.strip())
                 art.download()
                 art.parse()
@@ -212,10 +213,8 @@ def extract_url(data_path, tweet_file):
         try:
             # # find only the first URL
             # url = re.search("(?P<url>https?://[^\s]+)", text).group("url")
-
             # # find all URLs in the tweet
             urls = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text)
-
             print urls
 
         except AttributeError:
@@ -452,7 +451,8 @@ def get_n_closest(vector, N=5):
     simil_list = []
     for count, line in enumerate(lines):
         line_vec = np.asarray(line.strip('\n ').split(' '), dtype=np.float32)
-        similarity = cosine_similarity(line_vec.reshape(1,-1), vector.reshape(1,-1))[0][0] # <- 왜 [0][0] 이지?
+        similarity = cosine_similarity(line_vec.reshape(1,-1), 
+                                       vector.reshape(1,-1))[0][0] # why [0][0]?
         simil_list.append(similarity)
         if count % 3000 == 0:
             progress_bar(count,len(lines))
@@ -486,7 +486,8 @@ def normalized(text,
     words = nltk.pos_tag(text.lower().split())
 
     if remove_punc:
-        words = [(word[0].strip('"~`!?<>{}[]+=@#$%^&*.,:;-_)(/\'|'), word[1]) for word in words]
+        words = [(word[0].strip('"~`!?<>{}[]+=@#$%^&*.,:;-_)(/\'|'), word[1]) 
+                 for word in words]
         words = [(word[0].replace("'s",""), word[1]) for word in words]
 
     if remove_stops:
@@ -506,8 +507,15 @@ def normalized(text,
 
     if lemmatize:
         lemmatizer = WordNetLemmatizer()
-        pos_dict = {'J': wordnet.ADJ, 'V': wordnet.VERB, 'N': wordnet.NOUN, 'R': wordnet.ADV}
-        words = [(lemmatizer.lemmatize(word[0], pos_dict.get(word[1][0],wordnet.NOUN)), word[1]) for word in words]
+        pos_dict = {'J': wordnet.ADJ, 
+                    'V': wordnet.VERB, 
+                    'N': wordnet.NOUN, 
+                    'R': wordnet.ADV}
+        words = [(lemmatizer.lemmatize(word[0], 
+                  pos_dict.get(word[1][0], 
+                  wordnet.NOUN)), 
+                  word[1])
+                  for word in words]
 
     words = [word[0] for word in words]
 
@@ -650,21 +658,11 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
         return acc, _, _, _
 
     elif mode  == 'regression':
-        
         # percentage = [int(100*pair[0]/pair[1]) for pair in comparison]
-        
         # if verbose: print percentage
-
         # acc = np.mean(percentage)
         acc = 0
         _   = None
-
         # print "Average (percentage) accuracy: {0:.2f}".format(np.mean(percentage))
 
         return acc, _, _, _
-
-
-
-
-
-

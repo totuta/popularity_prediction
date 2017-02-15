@@ -70,46 +70,43 @@ def timeout_handler(signum, frame):   # Custom signal handler
     raise TimeoutException
 
 
-
-
-def extract_json_from_news_urls():
-
+def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     article_list = []
     for URL_FILE in URL_FILES:
-        with open(DATA_PATH + URL_FILE, 'r') as inFile:
+        open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':
                 article_dict = {}
-                print "{}/{} : {}\r".format(idx + 1, len(dataset), art.title)
-                art = Article(url.strip())
+                art = Article(url.strip()) # don't need to strip '\n'?
                 art.download()
                 art.parse()
                 try:
                     art.nlp()
                 except newspaper.article.ArticleException:
                     print "NLP ERROR\n"
+                print "{}/{} : {}".format(idx+1, 
+                                          len(dataset), 
+                                          art.title.encode('utf-8'))
 
                 article_dict['url'] = art.url
-                article_dict['media'] = None
                 article_dict['datePublished'] = str(art.publish_date)
                 article_dict['title'] = art.title
                 article_dict['author'] = art.authors
                 article_dict['text'] = art.text
                 article_dict['summary'] = art.summary
                 article_dict['keywords'] = art.keywords
+                article_dict["relevant"] = True
+                article_dict["facebook"] = True
+                article_dict["likes"] = None
+                article_dict["comments"] = None
                 article_dict["category"] = None
-                article_dict["rt"]  = None
-                article_dict["relevant"]  = None
-                article_dict["sentiment"]  = None
-                article_dict["media"]  = None
-                article_dict["comments"]  = None
-                article_dict["datePublished"]  = None
-                article_dict["source"]  = None
-                article_dict["facebook"]  = None
-                article_dict["likes"]  = None
-                article_dict["tweets"]  = None
-                article_dict["search_keyword"]  = URL_FILE[4:-4]
+                article_dict["tweets"] = None
+                article_dict["rt"] = None
+                article_dict["sentiment"] = None
+                article_dict["media"] = None
+                article_dict["source"] = None
+                article_dict["search_keyword"] = None
 
                 article_list.append(article_dict)
 

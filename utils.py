@@ -37,12 +37,17 @@ from newspaper import Article
 
 
 def progress_bar(current_step, total_step, graph_step=2.5):
-    ''' displaying progress bar
-    current_step : current step during the process
-                   should start from 1
-                   should be given
-    total_step : total number of steps to finish the process
-    graph_step : one unit(in percentage) in the progress bar
+    '''Display progress bar
+
+    Args:
+        current_step: current step during the process
+                       should start from 1
+                       should be given
+        total_step: total number of steps to finish the process
+        graph_step: one unit(in percentage) in the progress bar
+    Returns:
+        None
+        Just displaying a progress bar in stdout
     '''
 
     percent = round(current_step / total_step * 100, 1)
@@ -61,9 +66,8 @@ def progress_bar(current_step, total_step, graph_step=2.5):
 
 
 class TimeoutException(Exception):   # Custom exception class
-    """
-    to time-out a certain function
-    """
+    '''Time-out a certain function
+    '''
     pass
 
 def timeout_handler(signum, frame):   # Custom signal handler
@@ -115,8 +119,7 @@ def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
 
 
 def extract_json():
-    '''
-    extract a compact JSON file from the raw json of downloaded tweets
+    '''Extract a compact JSON file from the raw json of downloaded tweets
     '''
 
     DATA_PATH = ''
@@ -125,10 +128,9 @@ def extract_json():
     OUT_FILE = 'tweets_elnino_0125-0501_simple.json'
     # OUT_FILE = 'tweets_lanina_0211-0429_simple.json'
 
-    inFile = open(DATA_PATH + TWEET_FILE, 'r')
-    # dataset = inFile.readlines()
-    temp_json = json.load(inFile)
-    inFile.close()
+    with open(DATA_PATH + TWEET_FILE, 'r') as inFile:
+        # dataset = inFile.readlines()
+        temp_json = json.load(inFile)
 
     KEY_JSON = 'tweets_elnino_0125-0501'
     # KEY_JSON = 'tweets_lanina_0211-0429'
@@ -150,8 +152,7 @@ def extract_json():
 
 
 def extract_url(data_path, tweet_file):
-    '''
-    extract URLs from tweets
+    '''Extract URLs from tweets
     '''
 
     # DATA_PATH = ''
@@ -317,8 +318,7 @@ def extract_url(data_path, tweet_file):
 
 
 def divide_tweets_db():
-    '''
-    divide a huge tweets json file into small ones
+    '''Divide a huge tweets json file into small ones
     '''
 
     DATA_PATH = ''
@@ -326,9 +326,8 @@ def divide_tweets_db():
     OUT_FILE = 'tweets_elnino_0125-0501_simple'
 
     print "loading simple tweets file..."
-    inFile = open(DATA_PATH + TWEET_FILE, 'r')
-    temp_json = json.load(inFile)
-    inFile.close()
+    with open(DATA_PATH + TWEET_FILE, 'r') as inFile:
+        temp_json = json.load(inFile)
     print "loading simple tweets - done."
 
     KEY_JSON = 'tweets_elnino_0125-0501'
@@ -343,8 +342,7 @@ def divide_tweets_db():
 
 
 def combine_tweets_db():
-    '''
-    combine small tweets json files into one big json
+    '''Combine small tweets json files into one big json
     '''
 
     DATA_PATH = ''
@@ -368,15 +366,13 @@ def combine_tweets_db():
 
 
 def url_compare(url, num_char):
-    '''
-    getting resolved url address?? NEED TO CHECK
+    '''Getting resolved url address?? NEED TO CHECK
     '''
     return urlparse.urlparse(url).path[:num_char]
 
 
 def count_tweets():
-    '''
-    counting number of tweets?? NEED TO CHECK
+    '''Counting number of tweets?? NEED TO CHECK
     '''
 
     # read simple_urls into json format
@@ -433,11 +429,19 @@ def count_tweets():
 
 
 def get_n_closest(vector, N=5):
+    '''Get N closest words to a given word in given GloVe semantic spaces
 
-    n_closest = []
+    Args:
+        vector: a GloVe vector for the word
+        N: number of neighboring words to be chosen
 
+    Returns:
+        n_closest: a list N words
+    '''
     VECTOR_FILE = 'data/glove.6B.50d.vector'
     VOCAB_FILE  = 'data/glove.6B.50d.vocab'
+
+    n_closest = []
 
     with open(VECTOR_FILE,'r') as f_in:
         lines = f_in.readlines()
@@ -474,6 +478,8 @@ def normalized(text,
                singularize=False,
                stem="none", 
                lemmatize=False):
+    '''Normalize given text
+    '''
 
     stops = stopwords.words('english')
     stops.extend(['said','many','must','also']) # add some more words to nltk stopwords
@@ -518,6 +524,14 @@ def normalized(text,
 
 
 def load_glove_vectors(PATH, FILE):
+    '''Load GloVe vectors and indices into memory
+
+    Args:
+        PATH: path to GloVe files
+        FILE: name of Glove file
+    Returns:
+        glove_dict: a dict of words and its GloVe vectors
+    '''
     print "loading Word Embedding..."
     with open(PATH + FILE, 'r') as infile:
         gloveset = infile.readlines()
@@ -531,6 +545,15 @@ def load_glove_vectors(PATH, FILE):
 
 
 def word_emb_avg(text, word_embedding_dict):
+    '''Calculate the average GloVe vector for given list of words
+
+    Args:
+        text:
+        word_embedding_dict: a dict of GloVe vectors, which was returned by load_glove_vectors()
+
+    Returns:
+        wdemb_avg: average GloVe vector
+    '''
 
     words = nltk.word_tokenize(text.lower())
     words = [word for word in words if word not in stopwords.words('english')]  # remove stopwords
@@ -544,6 +567,52 @@ def word_emb_avg(text, word_embedding_dict):
     wdemb_avg = np.mean(wdemb_stack.astype(np.float32), axis=0)
 
     return wdemb_avg
+
+
+def get_dal_dict():
+    '''Make a dict of DAL(Dictionalry of Affect in Language)
+    '''
+    dal_dict = {}
+    PATH = 'data/'
+    DAL_FILE = 'dict_of_affect.txt'
+    with open(PATH+DAL_FILE, 'r') as inFile:
+        dal_body = inFile.readlines()
+    for vocab in dal_body:
+        vocab_split = vocab.split()
+        dal_dict[vocab_split[0]] = (float(vocab_split[1]), 
+                                    float(vocab_split[2]), 
+                                    float(vocab_split[3]))
+    return dal_dict
+
+def dal_word(word):
+    '''Get DAL values for a single word
+
+    Args:
+        word: 
+
+    Returns:
+        3-tuple of DAL values for the word: when word in DAL vocab
+        (0,0,0): when word not in DAL vocab
+    '''
+    dal_dict = get_dal_dict()
+
+    return dal_dict[word] if word in dal_dict else (0, 0, 0)
+
+def dal_sentence(sentence):
+    '''Get DAL values for a sentence(multiple words)
+
+    Args:
+        sentence: string
+    Returns:
+        average DAL values for normalized sentence
+    '''
+    dal_dict = get_dal_dict()
+    res = []
+    for word in normalized(sentence):
+        if word in dal_dict:
+            res.append(dal_dict[word])
+
+    return np.mean(res, axis=0)
 
 
 def evaluate(result, target, threshold, mode='binary', verbose=True):

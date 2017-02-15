@@ -61,7 +61,6 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     # make training data(vectors)
     print "extracting features..."
-
     NUM_SENT = 3  # first N sentences of article body to be used
     data_cnt_relev = 0
     dict_X, dict_Y = [], []

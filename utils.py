@@ -4,15 +4,16 @@
 # filename: utils.py 
 # description: util functions for WISER project
 # author: Wonchang Chung
-# date: 12/19/16
+# date: 2/15/17
 
 from __future__ import division
 
 import sys
 import time
 import re
-import signal
 import json
+import signal
+signal.signal(signal.SIGALRM, timeout_handler) # Change the behavior of SIGALRM
 
 import numpy as np
 from scipy.stats.stats import pearsonr
@@ -36,9 +37,7 @@ from newspaper import Article
 
 
 def progress_bar(current_step, total_step, graph_step=2.5):
-    '''
-    displaying progress bar
-
+    ''' displaying progress bar
     current_step : current step during the process
                    should start from 1
                    should be given
@@ -70,8 +69,7 @@ class TimeoutException(Exception):   # Custom exception class
 def timeout_handler(signum, frame):   # Custom signal handler
     raise TimeoutException
 
-# Change the behavior of SIGALRM
-signal.signal(signal.SIGALRM, timeout_handler)
+
 
 
 def extract_json_from_news_urls():

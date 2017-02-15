@@ -144,7 +144,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
             # money
             pattern = re.compile('sh[0-9]')   # SH is money unit in Kenya
-            if pattern.search(art_title.lower()) or pattern.search(art_body_head.lower()):
+            if (pattern.search(art_title.lower()) or 
+                pattern.search(art_body_head.lower())):
                 new_dict_X['money'] = True
             else:
                 new_dict_X['money'] = False

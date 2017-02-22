@@ -254,6 +254,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     dictvec_trn_X = np.hstack((dictvec_trn_X * classic_wgt,
                                glove_title_matrix * glove_title_wgt,
                                glove_body_matrix * glove_body_wgt))
+
+    mode = 'regression'
     # preparing targets
     dictvec_trn_Y = []
     if  mode == 'binary':
@@ -266,7 +268,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
                 val = 0
             dictvec_trn_Y.append(val)
     elif mode == 'regression':
-        threshold = []
+        threshold = [] # dummy for function call
         for item in list_Y:
             num_likes_comments = item['num_likes'] + item['num_comments']
             dictvec_trn_Y.append(num_likes_comments)
@@ -283,6 +285,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # clf = linear_model.Perceptron(n_jobs=-1)
     # clf = linear_model.Perceptron(penalty='l1',n_jobs=-1)
     # clf = linear_model.Perceptron(penalty='elasticnet',n_jobs=-1)
+    clf = linear_model.PassiveAggressiveClassifier(n_jobs=-1)
 
     # SVC
     # clf = svm.SVC(kernel='linear')
@@ -299,12 +302,10 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # Linear Regression    
     # clf = linear_model.LinearRegression()
 
-    # Perceptron : Passive Aggressive
-    # clf = linear_model.PassiveAggressiveClassifier(n_jobs=-1)
-
     # Decision Tree
     #   Decision Tree needs to directly take the sparse matrix. So, use .toarray() option
     # clf = tree.DecisionTreeClassifier(criterion='gini')
+    # clf = tree.DecisionTreeClassifier(criterion='entropy')
 
     # Random Forest
     # clf = ensemble.RandomForestClassifier(max_depth=3)
@@ -326,12 +327,12 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     random_seed = 1
     rs = cross_validation.ShuffleSplit(n=len(dictvec_trn_X),
                                        n_iter=10,
-                                       test_size=0.3,
-                                       train_size=0.7,
+                                       test_size=0.1,
+                                       train_size=0.9,
                                        random_state=random_seed)
 
     # for evaluation
-    acc_list, prc_list, rec_list, f1_list = [],[],[],[]
+    acc_list, prc_list, rec_list, f1_list = [], [], [], []
     for i, indices in enumerate(rs):
         train_index, test_index = indices[0], indices[1]
         train_X = [dictvec_trn_X[ind] for ind in train_index]
@@ -341,12 +342,9 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
         print "---------------"
         print "iteration: {}".format(i+1)
-        # train the model using the training data
-        print "Training..."
-        clf.fit(train_X, train_Y)
 
-        # predict
-        print "Predicting..."
+        # train and predict
+        clf.fit(train_X, train_Y)
         result = clf.predict(test_X)
 
         # evaluate

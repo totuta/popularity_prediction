@@ -16,7 +16,6 @@ import numpy as np
 
 import nltk
 from nltk.util import ngrams
-
 from sklearn import cluster
 from sklearn import cross_validation
 from sklearn import ensemble
@@ -50,88 +49,167 @@ SHOW_PROG_BAR = True
 
 def predict_popularity(ARTICLE_FILE, mode='binary'):
 
-    # get articles
     with open(DATA_PATH + ARTICLE_FILE, 'r') as inFile:
         articles_db = json.load(inFile)
     print "total number of articles: {}".format(len(articles_db))
 
-    # get glove vectors
+    # glove vectors
     glove_dict = load_glove_vectors(GLOVE_PATH, GLOVE_FILE)
     glove_len = len(glove_dict['the'])
 
-    # make training data(vectors)
     print "extracting features..."
-    NUM_SENT = 3  # first N sentences of article body to be used
-    data_cnt_relev = 0
+    FIRST_N = 3
     dict_X, dict_Y = [], []
     glove_title_matrix, glove_body_matrix = np.zeros(glove_len), np.zeros(glove_len)
+    cnt_data = 0
 
-    for i in range(len(articles_db)):
-        if SHOW_PROG_BAR: progress_bar(i,len(articles_db)-1)
-
-        article = articles_db[i]
+    for article in articles_db:
         if article['facebook']: # only use facebook articles
-            data_cnt_relev += 1
+            cnt_data += 1
             new_dict_X, new_dict_Y = {}, {}
 
             art_title = article['title'] 
             art_body  = article['text']
-            art_body_head  = (' ').join(art_body.split('\n')[:NUM_SENT]) # first N sentences
+            art_body_head  = (' ').join(art_body.split('\n')[:FIRST_N]) # first N sentences
 
             # ---------------------
             # numerical features
             # ---------------------
 
-            # sentiment (title)
-            title = tb(art_title)
-            new_dict_X['sent_title_pol'] = title.sentiment.polarity
-            new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
+            # # sentiment (title)
+            # title = tb(art_title)
+            # new_dict_X['sent_title_pol'] = title.sentiment.polarity
+            # new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
 
-            # sentiment (body)
-            body  = tb(art_body_head)
-            new_dict_X['sent_body_pol'] = body.sentiment.polarity
-            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
+            # # sentiment (body)
+            # body  = tb(art_body_head)
+            # new_dict_X['sent_body_pol'] = body.sentiment.polarity
+            # new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
 
             # ---------------------
             # categorical features
             # ---------------------
 
+            # gazetteers
+
+            politicians = ['Uhuru', 'Kenyatta', 'Mudavadi', 'Kamau', 'Ruto', 
+               'MP', 'MCA', 'ODM', 'Jubilee', 'Boinnet', 'Muturi', 
+               'Mugabe', 'Raila', 'Odinga', "Thang'wa", 'Dado', 
+               'Ukur', 'Yatani', 'NYANGENA', "WANG'OMBE", 'Jama', 'Duale',]
+
+            organizations_domestic = ['Kenya', 'KMA', 'Kenya meteorological agency', 
+                                      'MET', 'KCSE', 'Government', 'Govt', 'County', 
+                                      'KWS', 'KTDA', 'KCB', 'CBK', 'Parastatals',]
+
+            organizations_international =['UN', 'United Nations', 'Red Cross', 'UNICEF', 'ICC', 'OPEC',]
+
+            regions = ['Nairobi', 'Nakuru', 'Mombasa', 'Narok', 'Lamu', 'Garissa', 
+                       'Kibwezi', 'Umani', 'Migori', 'Wajir', 'Kwale', 'Kitui', 
+                       'Makueni', 'Nyanza', 'Yatta', 'Ogieks', 'Kinango', 'Mandera', 
+                       'Embu', 'JKIA', 'jomo kenyatta international airport', 'Kajiado', 
+                       'Twaif', 'Shamburu', 'Kinango', 'Lunga', 'Tharaka-Nithi', 'Mwea', 
+                       'Dadaab', 'Ngewa', 'Tana River', 'Marsabit', 'Iten', 'Eldoret', 
+                       'Pokot', 'Kilifi', 'Isiolo', 'Kiambu', 'Kisii', 'Moi', 'Kakamega',
+                       'Chemelil',]
+
+            neighbors = ['Zimbabwe', 'Djibouti', 'Somalia', 'Morocco', 'Zambia', 
+                         'Ethiopia', 'Sudan', 'Uganda', 'Tanzania', 'France', 'Paris', 
+                         'Rwanda', 'Burundi', 'Australia', 'Israel', 'Europe', 'EU', 'America', 'World',]
+
+            climates = ['Climate', 'Weather', 'Paris',]
+
+            agricultures = ['Agriculture', 'Farmer', 'Maize', 'Tea', 'Potato', 'Camel', 
+                            'Plant', 'livestock', 'cassava', 'capsicum', 'rice',]
+
+            business = ['price', 'stock', 'insurance', 'insurer',]
+
+            monetary = ['money', 'budget', 'cash', 'share', 'inflation', 'deflation', 'price',]
+
             # money
+            new_dict_X['money'] = False
             pattern = re.compile('sh[0-9]')   # SH is money unit in Kenya
-            if (pattern.search(art_title.lower()) or 
-                pattern.search(art_body_head.lower())):
+            if (pattern.search(art_title.lower())):
                 new_dict_X['money'] = True
-            else:
-                new_dict_X['money'] = False
+            for word in monetary:
+                if word.lower() in art_title:
+                    new_dict_X['money'] = True    
 
-            # keyword
-            art_keywords = article['keywords']
-            for j in range(len(art_keywords)):
-                new_dict_X['keywd_{}'.format(art_keywords[j])] = True
+            # politicians
+            new_dict_X['politician'] = False
+            for word in politicians:
+                if word.lower() in art_title:
+                    new_dict_X['politician'] = True
 
-            # media
-            new_dict_X['media_{}'.format(article['media'])] = True
+            # domestic organizations
+            new_dict_X['organ_dom'] = False
+            for word in organizations_domestic:
+                if word.lower() in art_title:
+                    new_dict_X['organ_dom'] = True
 
-            # n-grams (title)
-            title_tokens = nltk.word_tokenize(art_title)
-            for unigram in ngrams(title_tokens, 1):
-                new_dict_X['uni_title_{}'.format(unigram)] = True
-            for bigram  in ngrams(title_tokens, 2):
-                new_dict_X['bi_title_{}'.format(bigram)] = True
-            for trigram in ngrams(title_tokens, 3):
-                new_dict_X['tri_title_{}'.format(trigram)] = True
+            # international organizations
+            new_dict_X['organ_int'] = False
+            for word in organizations_international:
+                if word.lower() in art_title:
+                    new_dict_X['organ_int'] = True
 
-            # n-grams (body)
-            body_tokens = nltk.word_tokenize(art_body)
-            for unigram in ngrams(body_tokens, 1):
-                new_dict_X['uni_body_{}'.format(unigram)] = True
-            for bigram  in ngrams(body_tokens, 2):
-                new_dict_X['bi_body_{}'.format(bigram)] = True
-            for trigram in ngrams(body_tokens, 3):
-                new_dict_X['tri_body_{}'.format(trigram)] = True
+            # regions
+            new_dict_X['region'] = False
+            for word in regions:
+                if word.lower() in art_title:
+                    new_dict_X['region'] = True
 
-            # year & month
-            new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
+            # neighbors
+            new_dict_X['neighbor'] = False
+            for word in neighbors:
+                if word.lower() in art_title:
+                    new_dict_X['neighbor'] = True
+
+            # climate
+            new_dict_X['climate'] = False
+            for word in climates:
+                if word.lower() in art_title:
+                    new_dict_X['climate'] = True
+
+            # agriculture
+            new_dict_X['agri'] = False
+            for word in agricultures:
+                if word.lower() in art_title:
+                    new_dict_X['agri'] = True
+
+            # business
+            new_dict_X['biz'] = False
+            for word in business:
+                if word.lower() in art_title:
+                    new_dict_X['biz'] = True
+
+            # # keyword
+            # art_keywords = article['keywords']
+            # for j in range(len(art_keywords)):
+            #     new_dict_X['keywd_{}'.format(art_keywords[j])] = True
+
+            # # media
+            # new_dict_X['media_{}'.format(article['media'])] = True
+
+            # # n-grams (title)
+            # title_tokens = nltk.word_tokenize(art_title)
+            # for unigram in ngrams(title_tokens, 1):
+            #     new_dict_X['uni_title_{}'.format(unigram)] = True
+            # for bigram  in ngrams(title_tokens, 2):
+            #     new_dict_X['bi_title_{}'.format(bigram)] = True
+            # for trigram in ngrams(title_tokens, 3):
+            #     new_dict_X['tri_title_{}'.format(trigram)] = True
+
+            # # n-grams (body)
+            # body_tokens = nltk.word_tokenize(art_body)
+            # for unigram in ngrams(body_tokens, 1):
+            #     new_dict_X['uni_body_{}'.format(unigram)] = True
+            # for bigram  in ngrams(body_tokens, 2):
+            #     new_dict_X['bi_body_{}'.format(bigram)] = True
+            # for trigram in ngrams(body_tokens, 3):
+            #     new_dict_X['tri_body_{}'.format(trigram)] = True
+
+            # # year & month
+            # new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
 
             # ---------------------
             # vector features
@@ -164,8 +242,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     # print total time to run this part
     print ""
-    print "Total Relevant   Counts : {}".format(data_cnt_relev)
-    print "Total Irrelevant Counts : {}".format(len(articles_db)-data_cnt_relev)
+    print "Total Relevant   Counts : {}".format(cnt_data)
+    print "Total Irrelevant Counts : {}".format(len(articles_db)-cnt_data)
     print "--------------------------------------"
 
 

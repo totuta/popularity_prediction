@@ -13,7 +13,6 @@ import time
 import re
 import json
 import signal
-signal.signal(signal.SIGALRM, timeout_handler) # Change the behavior of SIGALRM
 
 import numpy as np
 from scipy.stats.stats import pearsonr
@@ -72,12 +71,13 @@ class TimeoutException(Exception):   # Custom exception class
 
 def timeout_handler(signum, frame):   # Custom signal handler
     raise TimeoutException
+signal.signal(signal.SIGALRM, timeout_handler) # Change the behavior of SIGALRM
 
 
 def extract_json_from_news_urls(URL_FILES, OUTPUT_FILE):
     article_list = []
     for URL_FILE in URL_FILES:
-        open(DATA_PATH + URL_FILE, 'r') as inFile:
+        with open(DATA_PATH + URL_FILE, 'r') as inFile:
             dataset = inFile.readlines()
         for idx, url in enumerate(dataset):
             if url[0:4] == 'http':

@@ -59,7 +59,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     print "extracting features..."
     FIRST_N = 3
-    dict_X, dict_Y = [], []
+    list_X, list_Y = [], []
     glove_title_matrix, glove_body_matrix = np.zeros(glove_len), np.zeros(glove_len)
     cnt_data = 0
 
@@ -212,7 +212,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # new_dict_X['media_{}'.format(article['media'])] = True
 
             # ---------------------
-            # vector features
+            # word vector features
             # ---------------------
 
             # average glove vector (title)
@@ -223,39 +223,31 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             glove_avg_text = word_emb_avg(art_body_head, glove_dict)            
             glove_body_matrix = np.vstack((glove_body_matrix, glove_avg_text))
 
-            
             # ---------------------
             # targets
             # ---------------------
 
-            # target : number of likes
             new_dict_Y['num_likes'] = article.get('likes',0)
-
-            # target : number of comments
             new_dict_Y['num_comments'] = article.get('comments',0)
 
-
             # make a big list of dicts for sklearn DictVectorizer
-            dict_X.append(new_dict_X)
-            dict_Y.append(new_dict_Y)
+            list_X.append(new_dict_X)
+            list_Y.append(new_dict_Y)
 
-    # print total time to run this part
-    print "Total Relevant   Counts : {}".format(cnt_data)
-    print "Total Irrelevant Counts : {}".format(len(articles_db)-cnt_data)
+    print "Total Relevant Counts : {}".format(cnt_data)
     print "--------------------------------------"
 
 
     # vectorization
     print "Vectorizing..."
-    vectorizer_X  = DictVectorizer()  # only X to be vectorized
-    dictvec_trn_X = vectorizer_X.fit_transform(dict_X).toarray()
+    vectorizer_X = DictVectorizer()  # only X to be vectorized
+    dictvec_trn_X = vectorizer_X.fit_transform(list_X).toarray()
 
     # add word embedding as a feature
     classic_wgt = 1.0    # weights for classic features
     glove_title_wgt = 1.0    # weights for word embeddings
     glove_body_wgt = 1.0
 
-    # concatenate word embedding to vectorized features
     glove_title_matrix = glove_title_matrix[1:]     # remove dummy first rows
     glove_body_matrix = glove_body_matrix[1:]
 
@@ -265,31 +257,18 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     # preparing targets
     dictvec_trn_Y = []
     if  mode == 'binary':
-        threshold = [10]
-        for item in dict_Y:
-            num_likes_comments = item['num_likes']+item['num_comments']
+        threshold = [20]
+        for item in list_Y:
+            num_likes_comments = item['num_likes'] + item['num_comments']
             if num_likes_comments > threshold[0]:
                 val = 100
             else:
                 val = 0
             dictvec_trn_Y.append(val)
-    elif mode == 'ternary':
-        threshold = [10,20]
-        threshold_upper = max(threshold)
-        threshold_lower = min(threshold)
-        for item in dict_Y:
-            num_likes_comments = item['num_likes']+item['num_comments']
-            if   num_likes_comments > threshold_upper:
-                val = 100
-            elif num_likes_comments > threshold_lower:
-                val = 50
-            else:
-                val = 0
-            dictvec_trn_Y.append(val)
     elif mode == 'regression':
         threshold = []
-        for item in dict_Y:
-            num_likes_comments = item['num_likes']+item['num_comments']
+        for item in list_Y:
+            num_likes_comments = item['num_likes'] + item['num_comments']
             dictvec_trn_Y.append(num_likes_comments)
 
     # take care of NaN and INF
@@ -297,15 +276,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     dictvec_trn_Y = np.nan_to_num(dictvec_trn_Y)
 
 
-    #----------------
-    print "Run Y = tsne.tsne(X, no_dims, perplexity) to perform t-SNE on your dataset."
-    from tsne import *
-    Y = tsne(dict_vec_trn_X, 2, 50, 20.0)
-    plt.scatter(Y[:,0], Y[:,1], 20, dictvec_trn_Y)
-    plt.show();
-    #----------------
-
-
+    ####################
     # choose classifier
 
     # Perceptron

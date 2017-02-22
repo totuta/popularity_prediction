@@ -132,7 +132,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
                 new_dict_X['money'] = True
             for word in monetary:
                 if word.lower() in art_title:
-                    new_dict_X['money'] = True    
+                    new_dict_X['money'] = True
 
             # politicians
             new_dict_X['politician'] = False
@@ -187,9 +187,6 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # for j in range(len(art_keywords)):
             #     new_dict_X['keywd_{}'.format(art_keywords[j])] = True
 
-            # # media
-            # new_dict_X['media_{}'.format(article['media'])] = True
-
             # # n-grams (title)
             # title_tokens = nltk.word_tokenize(art_title)
             # for unigram in ngrams(title_tokens, 1):
@@ -210,6 +207,9 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
             # # year & month
             # new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
+
+            # # media
+            # new_dict_X['media_{}'.format(article['media'])] = True
 
             # ---------------------
             # vector features
@@ -235,13 +235,11 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             new_dict_Y['num_comments'] = article.get('comments',0)
 
 
-
             # make a big list of dicts for sklearn DictVectorizer
             dict_X.append(new_dict_X)
             dict_Y.append(new_dict_Y)
 
     # print total time to run this part
-    print ""
     print "Total Relevant   Counts : {}".format(cnt_data)
     print "Total Irrelevant Counts : {}".format(len(articles_db)-cnt_data)
     print "--------------------------------------"

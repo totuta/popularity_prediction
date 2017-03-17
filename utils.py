@@ -615,26 +615,46 @@ def dal_sentence(sentence):
     return np.mean(res, axis=0)
 
 
+def score(target, predict): 
+    '''Return prediciton score using LUT
+    '''
+
+    # limit values
+    if target > 29 : target = 29
+    if target < 0 : target = 0
+    if predict > 29 : predict = 29
+    if predict < 0 : predict = 0
+    
+    with open('data/evaluation_lut.txt', 'r') as inFile:
+        table_raw = inFile.readlines()
+
+    table = []
+    for line in table_raw:
+        table.append([float(val) for val in line.strip('\n').split(' ')])
+
+    return table[29 - predict][target]
+
+
 def evaluate(result, target, threshold, mode='binary', verbose=True):
     total_count = len(result)
     comparison = zip(result,target)
 
-    # show prediction and target pairs
     if verbose:
-        for i in range(total_count): print i, comparison[i]
+        for pair in comparison: 
+            pred_score = score(pair[1], pair[0])
+            print pred_score, pair
 
     if   mode == 'binary':
-        threshold_hotnot = threshold[0]
         result_hotnot = []
         target_hotnot = []
         hot_cnt = 0
 
         for res in result:
-            if res > threshold_hotnot: result_hotnot.append('++')
+            if res > threshold: result_hotnot.append('++')
             else: result_hotnot.append('__')
         
         for tgt in target:
-            if tgt > threshold_hotnot:
+            if tgt > threshold:
                 target_hotnot.append('++')
                 hot_cnt += 1
             else:
@@ -667,66 +687,13 @@ def evaluate(result, target, threshold, mode='binary', verbose=True):
 
         return acc, prc, rec, f1
 
-
-    elif mode == 'ternary':
-        threshold_upper = max(threshold)
-        threshold_lower = min(threshold)
-        result_hml = []
-        target_hml = []
-        high_cnt, mid_cnt, low_cnt = 0, 0, 0
-
-        for res in result:
-            if   res > threshold_upper: result_hml.append('++')
-            elif res > threshold_lower: result_hml.append('//')
-            else: result_hml.append('__')
-        
-        for tgt in target:
-            if   tgt > threshold_upper:
-                target_hml.append('++')
-                high_cnt += 1
-            elif tgt > threshold_lower:
-                target_hml.append('//')
-                mid_cnt += 1
-            else:
-                target_hml.append('__')
-                low_cnt += 1
-
-        comparison_hml = zip(result_hml, target_hml)
-
-        print "High Ratio: {0:.2f}".format(high_cnt/total_count)
-        print "Mid  Ratio: {0:.2f}".format(mid_cnt/total_count)
-        print "Low  Ratio: {0:.2f}".format(low_cnt/total_count)
-
-
-        # something like Complexity Matrix
-        TH, FH, TM, FM, TL, FL = 0,0,0,0,0,0
-        for i in range(total_count):
-            # if verbose: print i, comparison_hml[i]
-            if   comparison_hml[i][0] == '++':
-                if   comparison_hml[i][1] == '++': TH += 1
-                else : FH += 1
-            elif comparison_hml[i][0] == '//':
-                if   comparison_hml[i][1] == '//': TM += 1
-                else : FM += 1
-            elif comparison_hml[i][0] == '__':
-                if   comparison_hml[i][1] == '__': TL += 1
-                else : FL += 1
-
-        acc = (TH+TM+TL)/total_count
-        _   = None
-        
-        if verbose :
-            print "TH: {}, FH: {}, TM: {}, FM: {}, TL: {}, FL: {}".format(TH, FH, TM, FM, TL, FL)
-            print "Accuracy : {0:.2f}".format(acc)
-
-        return acc, _, _, _
-
     elif mode  == 'regression':
-        # percentage = [int(100*pair[0]/pair[1]) for pair in comparison]
-        # if verbose: print percentage
-        # acc = np.mean(percentage)
-        acc = 0
+        score_list = []
+        for pair in comparison:
+            score_list.append(score(pair[1], pair[0]))
+        acc = np.mean(score_list)
         _   = None
-        # print "Average (percentage) accuracy: {0:.2f}".format(np.mean(percentage))
-
         return acc, _, _, _
+
+
+

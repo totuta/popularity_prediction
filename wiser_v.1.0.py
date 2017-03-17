@@ -76,19 +76,49 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # numerical features
             # ---------------------
 
-            # # sentiment (title)
-            # title = tb(art_title)
-            # new_dict_X['sent_title_pol'] = title.sentiment.polarity
-            # new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
+            # sentiment (title)
+            title = tb(art_title)
+            new_dict_X['sent_title_pol'] = title.sentiment.polarity
+            new_dict_X['sent_title_sbj'] = title.sentiment.subjectivity
 
-            # # sentiment (body)
-            # body  = tb(art_body_head)
-            # new_dict_X['sent_body_pol'] = body.sentiment.polarity
-            # new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
+            # sentiment (body)
+            body  = tb(art_body_head)
+            new_dict_X['sent_body_pol'] = body.sentiment.polarity
+            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
 
             # ---------------------
             # categorical features
             # ---------------------
+
+            # keyword
+            art_keywords = article['keywords']
+            for j in range(len(art_keywords)):
+                new_dict_X['keywd_{}'.format(art_keywords[j])] = True
+
+            # n-grams (title)
+            title_tokens = nltk.word_tokenize(art_title)
+            for unigram in ngrams(title_tokens, 1):
+                new_dict_X['uni_title_{}'.format(unigram)] = True
+            for bigram  in ngrams(title_tokens, 2):
+                new_dict_X['bi_title_{}'.format(bigram)] = True
+            for trigram in ngrams(title_tokens, 3):
+                new_dict_X['tri_title_{}'.format(trigram)] = True
+
+            # n-grams (body)
+            body_tokens = nltk.word_tokenize(art_body)
+            for unigram in ngrams(body_tokens, 1):
+                new_dict_X['uni_body_{}'.format(unigram)] = True
+            for bigram  in ngrams(body_tokens, 2):
+                new_dict_X['bi_body_{}'.format(bigram)] = True
+            for trigram in ngrams(body_tokens, 3):
+                new_dict_X['tri_body_{}'.format(trigram)] = True
+
+            # # year & month
+            # new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
+
+            # # media
+            # new_dict_X['media_{}'.format(article['media'])] = True
+
 
             # gazetteers
 
@@ -124,6 +154,8 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             business = ['price', 'stock', 'insurance', 'insurer',]
 
             monetary = ['money', 'budget', 'cash', 'share', 'inflation', 'deflation', 'price',]
+
+            pope = ['pope', 'francisco',]
 
             # money
             new_dict_X['money'] = False
@@ -182,34 +214,11 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
                 if word.lower() in art_title:
                     new_dict_X['biz'] = True
 
-            # # keyword
-            # art_keywords = article['keywords']
-            # for j in range(len(art_keywords)):
-            #     new_dict_X['keywd_{}'.format(art_keywords[j])] = True
-
-            # # n-grams (title)
-            # title_tokens = nltk.word_tokenize(art_title)
-            # for unigram in ngrams(title_tokens, 1):
-            #     new_dict_X['uni_title_{}'.format(unigram)] = True
-            # for bigram  in ngrams(title_tokens, 2):
-            #     new_dict_X['bi_title_{}'.format(bigram)] = True
-            # for trigram in ngrams(title_tokens, 3):
-            #     new_dict_X['tri_title_{}'.format(trigram)] = True
-
-            # # n-grams (body)
-            # body_tokens = nltk.word_tokenize(art_body)
-            # for unigram in ngrams(body_tokens, 1):
-            #     new_dict_X['uni_body_{}'.format(unigram)] = True
-            # for bigram  in ngrams(body_tokens, 2):
-            #     new_dict_X['bi_body_{}'.format(bigram)] = True
-            # for trigram in ngrams(body_tokens, 3):
-            #     new_dict_X['tri_body_{}'.format(trigram)] = True
-
-            # # year & month
-            # new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
-
-            # # media
-            # new_dict_X['media_{}'.format(article['media'])] = True
+            # pope
+            new_dict_X['pope'] = False
+            for word in pope:
+                if word.lower() in art_title:
+                    new_dict_X['pope'] = True
 
             # ---------------------
             # word vector features
@@ -254,21 +263,18 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
     dictvec_trn_X = np.hstack((dictvec_trn_X * classic_wgt,
                                glove_title_matrix * glove_title_wgt,
                                glove_body_matrix * glove_body_wgt))
-
-    mode = 'regression'
     # preparing targets
+    threshold = 20
     dictvec_trn_Y = []
     if  mode == 'binary':
-        threshold = [20]
         for item in list_Y:
             num_likes_comments = item['num_likes'] + item['num_comments']
-            if num_likes_comments > threshold[0]:
+            if num_likes_comments > threshold:
                 val = 100
             else:
                 val = 0
             dictvec_trn_Y.append(val)
     elif mode == 'regression':
-        threshold = [] # dummy for function call
         for item in list_Y:
             num_likes_comments = item['num_likes'] + item['num_comments']
             dictvec_trn_Y.append(num_likes_comments)

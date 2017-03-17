@@ -1,0 +1,224 @@
+DATA
+    Tweets
+        El Nino: 2016 0125-0501 1,227,245 개
+            0703 까지 추가 하자
+        La Nina: 2016 0211-0429 50.791 개. 그러나 무관한 트윗이 대부분
+        ENSO: 해봤지만, 이것과 무관한 트윗이 99.9%. 일반인들은 이런 어휘를 모르니까
+    Facebook
+        Facebook is 4 times popular than Tweeter in African region(TODO: 근거 확인)
+        어떤 미디어를 택했느냐에 대해서 좀 내용을 보강하고 싶으면
+            161025 & 1115 WISER : Kathy 을 참조 해서 몇마디 더 넣을 것
+            Capital FM Kenya, DailyNation, AllAfrica.com, KOT(Kenyans on Twitter), KTN Kenya, Citizen TV Kenya, NTV Kenya, The Standard Media Group, Nation Fm, Ghetto Radio 89.5, The Insyder Magazine, Hero Radio
+            총 5개 선택했는데, 결과적으로 그 중 2개는 데이타로서 부적절
+                Kenya Today 는 타블로이드
+                Business Daily 는 경제지라서 성격이 다르고
+                Business Daily 와 Kenya Today 는 각각 기사수가 14, 15개 밖에 안되고,
+                인기도도 확연히 떨어져서 오히려 이게 노이즈를 만듦
+                호응도를 Normalization 해서 쓴다면 혹시 모르겠지만
+    Ipsos data 는 제한적인 도움만 되었음
+        신문 뉴스 아티클이 별로 없음
+        대부분 라디오 아티클
+        제목, 본문 없음
+        날짜와 서머리만 있음
+        이것을 실마리로 찾아보았는데, 거의 대부분이 이미 내가 구한 것들임
+        미미하게 도움 되었음 10개 미만으로
+
+    어떻게 모았는지
+    Post-processing
+    갯수
+
+OBSERVATION
+    WHAT SHOULD BE TOLD FIRST
+        Data Science 적인 방법으로 예측하는 것이 어려운 이유
+            일단 실제 Facebook 엔트리는 단순 텍스트가 아님.
+                그것을 텍스트만을 가지고 분류하려 하는 것은 한계를 내포하고 있음.
+                다만 이미지를 포함한 무엇인가가 타이틀과 텍스트 안에 내포 latent 되어 있기를 기대하는 것이다
+                이것을 최종적으로 직접 예를 들어서 보여주면 좋겠지
+                즉, 내포 되었다고 판단이 되었고 인기도도 높았는데, 실제로 내용을 읽어보니 그렇더라
+            마이너 하지면 영향을 미칠 요소들
+                기사가 올라온 시간도 영향을 미칠 것이다
+                    야밤에 올라온 것은 주목을 덜 받고 쓸려가 버리지
+            그렇기 때문에, 정확히 예측하는 것을 목표로 하기 보다는,
+            리즈너블한 수준의 예측을 하고,
+            거기서 얻어진 인사이트들을 제공하여,
+            정보를 좀 더 효과적으로 발신하게 하고, 발신된 정보들의 흐름을 잘 알게 하는 것이 목적이 되어야 한다.
+    FACEBOOK SPACE
+        페이스북 스페이스 자체에 대한 논문을 찾아 보자
+        유저(독자)가 아티클에 *반응*을 한다.
+            반응은 likes(또는 최근에 추가된 이모티콘들) 를 증가시키거나
+                이것이 과거에는 like, 즉, 좋아한다는 것이었다, 따라서 내용에 관심이 가도(싫어한다면) like 를 하지는 않았다
+                그렇지만 요새는 싫어하는 것도 반영할 수 있게 했기 때문에,
+                이것의 카운트를 *독자가 response 했다*라는 것으로 해석이 가능하다.
+                다만 like 이외의 이모티콘이 추가된 시점(2016년 2월경)이 우리 데이타의 중간에 있기 때문에, 그로 인한 오차는 있다.
+                이것을 weight를 주어서 뺄 수도 있겠으나, 웨이트가 얼만지 모르므로 일단 이 에러는 가지고 가는 것으로 한다
+            커멘트를 다는 것인데
+                커멘트는 그러나 *일부러 하는 것* 이다. 이것은 독자 반응의 직접적인 함수로 보기에는 어렵다.
+                (왜 어려운지 그래프 제시하면 좋음)
+                커멘트가 없으면 누가 시작하지 않으면 안 나올 것이고, 커멘트 자체가 컨트로버샬 하면 그것이 폭발할 수가 있다. 따라서 이것은 일단 데이타로는 남기나, 이번 연구의 어낼리시스 대상으로는 하지 않겠다.
+                보통은 likes 가 높은 아티클들에 한해서, comments 가 높아진다. likes 는 안 높은데 comments 만 높아지는 케이스는 매우 드물다.
+            우리 데이타는 일단 텍스트(제목+본문)이다. 그런데 페이스북 공간에서 유저가 기사를 찬찬히 읽고서, 내가 좋아하는구나 해서 like 를 누르는 것이 아니다. 이미 독자는 어느정도의 사전지식 prior knowledge 를 가지고 있고, 그 범위 안에 들어왔을 때, 그리고 기사 제목, 처음 몇줄, 사진 등이 강력하게 정서를 자극했을 때, *반응*을 할 것이다.
+                1) 여기서 중요한 것이 이미지도 중요한 역할을 할 텐데(아티클에 따라 다르겠지만), 이번 연구에서는 그것을 사용하지 않았다. 앞으로의 연구 대상으로 남기는 것이 좋겠다. 
+                2) 그리고 *반응도*는 순수하게 text 의 함수가 아니다. 당연히. 여러가지 외부 요인들(이미지는 외부 요인도 아니지만)에 의해 영향을 받으므로. 그러나 핫 하냐 안 하냐에 대해서는 분명 그 기사 상품 자체, 사실은 텍스트가 아니라 (페이스북 아티클 캡쳐 하나 올리고) 이러한 이미지+텍스트 의 패키지로 제시되는 것이다. 이 패키지가 불러일으키는 클러스터 정보를 텍스트 만을 가지고 함수를 찾겠다는 것이니 아주 정확할 수는 없다.
+            결국, 
+                a) 텍스트+이미지의 페북스런 패키지 정보 -> b) 순수 텍스트 -> c) 텍스트의 함수로서 feature extraction 이 된다. 정확도를 너무 기대해서는 안되고, 아래에서 얘기할, 1) 바로 참고되는 features 2) 앞으로 재적용 가능할(개선 방법도 제시된) 방법론을 제공하는 것이 목적이 될 것이다
+                    이미 a->b 에서 정보 유실이 이루어짐..
+            아무튼 결국은 아티클이 독자의 관심 있는 토픽의 클러스터 안으로 들어오냐는 것이 될 것이다, 반응을 할 거냐 말 것이냐는.
+                Hot Themes
+                    Hot Themes + 뭔가
+                Not Themes
+            그런 점에서 글의 주제, 토픽, 을 특정하는 것이 필요할 것이다.
+                tf-idf <- 이것 자체로는 별 효과가 없었다
+                LDA <- 이것 자체로 별 효과가 없었음
+                LSA <- 이것 자체로 별 효과 없었음
+                등이 필요할 것이고,
+                혹시 Deep Learning 적인 Topic 관련 technique 이 있다면 그것도 사용가능 할 것이다.
+            결국 글의 주제(사실은 이것이 한 두개일 것이다) 를 잘 포착하는 기술이 있어서 그것과 *반응도*를 연결시키는 함수를 찾을 수 있다면
+
+ANALYSIS
+    Local issues 들에 대한 것이 반응도가 높음
+        local politicinas
+        names of local places
+        NER 을 해서 정치인이 언급이 되었는지를 확인하는 작업
+        NER
+            polyglot 은 간단하긴 한데 정확도가 높지 않음
+            # TODO: stanford NER tagger for python 설치
+    돈 관련 반응도 높음
+        TODO : 이것을 어떻게 자동으로 찾을 것이냐
+    부패 관련 반응도 높음
+        TODO : 이것도 어떻게 자동으로 찾을 것이냐
+    Dry 한 정보는 무시됨 (커피값 등)
+        TODO : 그냥 서술적인 문장을 어떻게 디텍트 할 것이냐
+    욕하는 보도, 불평스러운 보도
+        TODO : 씨니컬
+    심플 클래시컬 피쳐들은 거의 랜덤 결과
+        n-gram
+        NB based Sentiment(Polarity)
+        Lexicon based Subjectivity
+        TF-IDF based keywords
+            본문들 전체를 모아서 했음
+        이유
+            데이타가 너무 적고(387)
+            n-gram 을 쓰는 경우는 차원이 너무 높다
+
+    Deep Features 들이 수치적으로 도움이 되기를 기대했었고, 일시적으로 도움이 되는 것 처럼 보였으나,
+        그것은 일종의 착시였음. 
+        이것을 보고할 수는 없음.
+    그래서 하나하나 읽어 보았다
+        호응도가 높은 기사들과 그렇지 않은 기사들의 차이가 있느냐
+        있다
+            이것은 이대로 유효한 정보로 전달이 가능할 것이다
+            아프리카 스페시픽 한가?
+        그것들을 어떻게 Data Science 적으로 포착해낼 것인가
+            이런 차원에서 심플 클래시컬 피쳐들을 revisit 해보자
+            포착할 수 있는가
+            클러스터링이 가능한가
+                클러스터링이 됐다면, 그 안에서 인간이 포착해내지 못했던 요소들이 나오는가
+            다른 주제에도 횡전개될 수 있는가
+            기술을 적용하는 과정에서 인간이 포착해내지 못했던 요소들이 나오는가
+                이것이 나온다면 매우 좋을 것이다
+    그 외의 Deliverables
+        Raw Data
+        Graphs
+
+    # TODO: verb 기준으로 볼 수 있을까? DAL 활용?
+
+    # TODO: IBM Alchemy 를 시도해 보자
+            괜찮은 것 같음. 좀 더 시도해 봐야
+            인기 많은거 10개, 인기 없는거 10개 정도 해서 볼 수 있는지
+
+    word embedding 을 쓸 때의 limitation
+        word embedding 을 하는 경우에, 사람 이름, 돈, 이나 고유명사가 안된다.
+        GloVe vocab 에 있다고 나오더라도 사실은 그게 큰 의미가 없는 것일 수가 있다. 전혀 잘못 짚었을 수도 있고. 중요한 것이 또 El-Nino  가 없다
+            nino 밖에 안된다
+    keywords 들을 hot 과 not 으로 구분해서 word embedding 으로 tsne 해 봤는데 나눠지지가 않는다.
+    LDA/LSI
+        LDA/LSA 에서 수치들이 뭔지를 일단 확인 해야 한다
+    Features
+        ∗ Categories
+            이거는 수작업으로 한 것이다
+            그리고 관찰을 해보면 카테고리는 상관이 별로 없는 것 같다
+        ∗ Sources
+            이것도 상관이 별로 없는 것 같다. 기본적으로 정보성이 강한 기사에는 별 반응을 안한다. 그런가보다.
+        ∗ Topic-words
+            이거는 가능성이 있을까?
+        ∗ Sentiment(of text body. annotated) ∗ Sentiment(of title. analyzed)
+            NB 방식으로 한 것에 따르면 이걸로는 모른다
+        ∗ Subjectivity(of text body. analyzed)
+            NB 방식으로 한 것에 따르면 이걸로는 모른다
+        ∗ Subjectivity(of title. analyzed)
+            NB 방식으로 한 것에 따르면 이걸로는 모른다
+        ∗ Media(e.g. Kenya Today, Daily Nation)
+            이것도 유의미한 feature 가 되지 못한다
+        ∗ UnigramBigramTrigram of Title & Text body
+            잘 안됨
+        ∗ Word-Embedding(averaged)(of title)
+            잘 안됨
+        ∗ Word-Embedding(averaged)(of topic-words)
+            잘 안됨
+        ∗ Word-Embedding(averaged)(of text body) : Not Tested Yet
+            잘 안됨
+
+Twitter Data 도 분석해서 제공한다
+    지역별로
+        Greater Kenyan Region vs. World
+        Twitter 에서는 Link 분석이 매우 큰 부분
+            이거를 포기해 버리면 큰 부분을 놓침
+            Image 분석 만큼이나 중요한 부분
+    LDA topic modeling 이 되지 않을까?
+    꼭 그 지역이 아니더라도, 이것을 가지고 뭔가를 해 볼 수 있지 않을까?
+
+Code 섹션 추가
+
+---
+DELIVERABLES
+    데이타
+        raw(json)
+        .xls
+        keywords
+            HOT/NOT 이 의미있게 클러스터링 된다는 전제하에
+        Facebook in JSON
+            category
+            rt
+            relevant
+            sentiment
+            author
+            url
+            media
+            title
+            search_keyword
+            datePublished
+            source
+            facebook
+            comments
+            tweets
+            text
+            keywords
+            summary
+            likes
+    툴
+        FB crawler
+        topic gen.
+        words gen.
+        similar words gen.
+        github 에 올렸다는 것을 알릴 것.
+    표/그림
+        바로 보고서에 사용할 수 있도록
+        # TODO: 월별 아티클 분포(갯수별, 인기도별)
+    인사이트
+        결과에 대한 이해
+
+---
+WHAT WE GOT AS A RESEARCH
+    SNS 공간에서의 독자 반응에 대한 인사이트와 그 가설
+    그 가설을 LDA 방법등으로 증명하는 것
+    아이디어 좀 더 생각해 보자
+
+---
+쫙 읽으면서 느낀 것
+    WISER 사람들은 정부/기관측이 발신한 정보가 어떻게 전달되는지에 관심이 많다
+    Feature Extraction 으로 돌아가서
+        Topic (Weather/Politics/Corruption)
+        Source (Domestic/International/US?)
+        Sentiment 
+        를 의미있게 뽑아낼 수 있나? 내 데이타 셋에서?
+        제목을 보면 그런게 추세가 느껴지나?

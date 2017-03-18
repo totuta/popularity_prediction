@@ -5,7 +5,7 @@ DATA
         La Nina: 2016 0211-0429 50.791 개. 그러나 무관한 트윗이 대부분
         ENSO: 해봤지만, 이것과 무관한 트윗이 99.9%. 일반인들은 이런 어휘를 모르니까
     Facebook
-        Facebook is 4 times popular than Tweeter in African region(TODO: 근거 확인)
+        Facebook is about 8 times popular than Tweeter in African region(link: http://digitalrand.com/resources/reports/A002.pdf)
         어떤 미디어를 택했느냐에 대해서 좀 내용을 보강하고 싶으면
             161025 & 1115 WISER : Kathy 을 참조 해서 몇마디 더 넣을 것
             Capital FM Kenya, DailyNation, AllAfrica.com, KOT(Kenyans on Twitter), KTN Kenya, Citizen TV Kenya, NTV Kenya, The Standard Media Group, Nation Fm, Ghetto Radio 89.5, The Insyder Magazine, Hero Radio
@@ -30,7 +30,7 @@ DATA
 OBSERVATION
     WHAT SHOULD BE TOLD FIRST
         Data Science 적인 방법으로 예측하는 것이 어려운 이유
-            일단 실제 Facebook 엔트리는 단순 텍스트가 아님.
+            일단 실제 Facebook 엔트리는 단순 텍스트가 아님
                 그것을 텍스트만을 가지고 분류하려 하는 것은 한계를 내포하고 있음.
                 다만 이미지를 포함한 무엇인가가 타이틀과 텍스트 안에 내포 latent 되어 있기를 기대하는 것이다
                 이것을 최종적으로 직접 예를 들어서 보여주면 좋겠지
@@ -215,7 +215,7 @@ WHAT WE GOT AS A RESEARCH
 
 ---
 쫙 읽으면서 느낀 것
-    WISER 사람들은 정부/기관측이 발신한 정보가 어떻게 전달되는지에 관심이 많다
+    케냐 사람들은 정부/기관측이 발신한 정보가 어떻게 전달되는지에 관심이 많다
     Feature Extraction 으로 돌아가서
         Topic (Weather/Politics/Corruption)
         Source (Domestic/International/US?)

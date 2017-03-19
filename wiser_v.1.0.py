@@ -119,13 +119,12 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # # media
             # new_dict_X['media_{}'.format(article['media'])] = True
 
-
             # gazetteers
-
             politicians = ['Uhuru', 'Kenyatta', 'Mudavadi', 'Kamau', 'Ruto', 
                'MP', 'MCA', 'ODM', 'Jubilee', 'Boinnet', 'Muturi', 
                'Mugabe', 'Raila', 'Odinga', "Thang'wa", 'Dado', 
-               'Ukur', 'Yatani', 'NYANGENA', "WANG'OMBE", 'Jama', 'Duale',]
+               'Ukur', 'Yatani', 'NYANGENA', "WANG'OMBE", 'Jama', 'Duale',
+               'Muturi', 'Rotich', 'PS',]
 
             organizations_domestic = ['Kenya', 'KMA', 'Kenya meteorological agency', 
                                       'MET', 'KCSE', 'Government', 'Govt', 'County', 
@@ -140,7 +139,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
                        'Twaif', 'Shamburu', 'Kinango', 'Lunga', 'Tharaka-Nithi', 'Mwea', 
                        'Dadaab', 'Ngewa', 'Tana River', 'Marsabit', 'Iten', 'Eldoret', 
                        'Pokot', 'Kilifi', 'Isiolo', 'Kiambu', 'Kisii', 'Moi', 'Kakamega',
-                       'Chemelil',]
+                       'Chemelil', 'Njoro', ]
 
             neighbors = ['Zimbabwe', 'Djibouti', 'Somalia', 'Morocco', 'Zambia', 
                          'Ethiopia', 'Sudan', 'Uganda', 'Tanzania', 'France', 'Paris', 
@@ -148,7 +147,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
             climates = ['Climate', 'Weather', 'Paris',]
 
-            agricultures = ['Agriculture', 'Farmer', 'Maize', 'Tea', 'Potato', 'Camel', 
+            agricultures = ['Agriculture', 'Agri', 'Farmer', 'Maize', 'Tea', 'Potato', 'Camel', 
                             'Plant', 'livestock', 'cassava', 'capsicum', 'rice',]
 
             business = ['price', 'stock', 'insurance', 'insurer',]

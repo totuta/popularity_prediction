@@ -87,7 +87,7 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # sentiment (body)
             body  = tb(art_body_head)
             new_dict_X['sent_body_pol'] = body.sentiment.polarity
-            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivitys
+            new_dict_X['sent_body_sbj'] = body.sentiment.subjectivity
 
             # ---------------------
             # categorical features

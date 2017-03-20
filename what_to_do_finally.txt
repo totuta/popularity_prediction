@@ -4,10 +4,31 @@ DATA
             0703 까지 추가 하자
         La Nina: 2016 0211-0429 50.791 개. 그러나 무관한 트윗이 대부분
         ENSO: 해봤지만, 이것과 무관한 트윗이 99.9%. 일반인들은 이런 어휘를 모르니까
+        트위터와 페이스북의 링크를 조사해 봤지만, 
+            지난 1년간의 뉴스 아티클 307개 중에서, 
+            8개만이 트위터에 흔적을 남겼다. 
+            120만 트윗들중에서 51개만이..케냐 엘니뇨 기사랑 연관이 있음.
+                -> 따라서 의미 있는 분석이 불가함
+        위치
+            geological tag을 가지고 있는 놈들이 매우 적다
+            그래서 tweets 들로부터 연구에 필요한 데이타를 뽑아내는 것이 매우 어려웠다
+            그래서 raw data 로만 남긴다
     Facebook
         Facebook is about 8 times popular than Tweeter in African region(link: http://digitalrand.com/resources/reports/A002.pdf)
+            Kenya 에서는 Facebook 부터 시작한다고 한다
+        Search Keywords: El Nino(당연), drought(2016 가을에 큰 dought), weather, climate
         어떤 미디어를 택했느냐에 대해서 좀 내용을 보강하고 싶으면
-            161025 & 1115 WISER : Kathy 을 참조 해서 몇마디 더 넣을 것
+            161025 & 1115 WISER 의 통계 부분을 참조 해서 몇마디 더 넣을 것
+                People Daily(The People)
+                    메트로같은 성격의 무가지인 것 같은데 페이스북이 개점 휴업 상태 -> 탈락
+                    총 50개
+            케냐로 한정하였다. 영어 미디어가 활발한 나라이므로.
+                Kenya
+                Ethiopia
+                Tanzania
+                Uganda
+                Rwanda
+                Burundi
             Capital FM Kenya, DailyNation, AllAfrica.com, KOT(Kenyans on Twitter), KTN Kenya, Citizen TV Kenya, NTV Kenya, The Standard Media Group, Nation Fm, Ghetto Radio 89.5, The Insyder Magazine, Hero Radio
             총 5개 선택했는데, 결과적으로 그 중 2개는 데이타로서 부적절
                 Kenya Today 는 타블로이드
@@ -58,7 +79,9 @@ OBSERVATION
                 보통은 likes 가 높은 아티클들에 한해서, comments 가 높아진다. likes 는 안 높은데 comments 만 높아지는 케이스는 매우 드물다.
             우리 데이타는 일단 텍스트(제목+본문)이다. 그런데 페이스북 공간에서 유저가 기사를 찬찬히 읽고서, 내가 좋아하는구나 해서 like 를 누르는 것이 아니다. 이미 독자는 어느정도의 사전지식 prior knowledge 를 가지고 있고, 그 범위 안에 들어왔을 때, 그리고 기사 제목, 처음 몇줄, 사진 등이 강력하게 정서를 자극했을 때, *반응*을 할 것이다.
                 1) 여기서 중요한 것이 이미지도 중요한 역할을 할 텐데(아티클에 따라 다르겠지만), 이번 연구에서는 그것을 사용하지 않았다. 앞으로의 연구 대상으로 남기는 것이 좋겠다. 
+                    다만 Image 가 caption 을 달고 있는 경우가 있다. generated caption 이 아니고 자체 캡션. 이것을 사용하면 되움이 되겠지만..이것은 IRI 를 돕는 것은 아니다
                 2) 그리고 *반응도*는 순수하게 text 의 함수가 아니다. 당연히. 여러가지 외부 요인들(이미지는 외부 요인도 아니지만)에 의해 영향을 받으므로. 그러나 핫 하냐 안 하냐에 대해서는 분명 그 기사 상품 자체, 사실은 텍스트가 아니라 (페이스북 아티클 캡쳐 하나 올리고) 이러한 이미지+텍스트 의 패키지로 제시되는 것이다. 이 패키지가 불러일으키는 클러스터 정보를 텍스트 만을 가지고 함수를 찾겠다는 것이니 아주 정확할 수는 없다.
+                3) 대부분의 경우, 사람들이 링크 기사를 다 읽고서 반응을 하는 것이 아닐 것이다. 그렇기 때문에 제목과 본문 첫 몇줄(페이스북 엔트리에 나오므로)이 피쳐가 된다는 이야기가 성립한다.
             결국, 
                 a) 텍스트+이미지의 페북스런 패키지 정보 -> b) 순수 텍스트 -> c) 텍스트의 함수로서 feature extraction 이 된다. 정확도를 너무 기대해서는 안되고, 아래에서 얘기할, 1) 바로 참고되는 features 2) 앞으로 재적용 가능할(개선 방법도 제시된) 방법론을 제공하는 것이 목적이 될 것이다
                     이미 a->b 에서 정보 유실이 이루어짐..
@@ -84,8 +107,10 @@ ANALYSIS
             # TODO: stanford NER tagger for python 설치
     돈 관련 반응도 높음
         TODO : 이것을 어떻게 자동으로 찾을 것이냐
+        Glove Vector 와의 거리를 따져보는 것?
     부패 관련 반응도 높음
         TODO : 이것도 어떻게 자동으로 찾을 것이냐
+        Glove Vector 와의 거리를 따져보는 것?
     Dry 한 정보는 무시됨 (커피값 등)
         TODO : 그냥 서술적인 문장을 어떻게 디텍트 할 것이냐
     욕하는 보도, 불평스러운 보도
@@ -103,6 +128,7 @@ ANALYSIS
     Deep Features 들이 수치적으로 도움이 되기를 기대했었고, 일시적으로 도움이 되는 것 처럼 보였으나,
         그것은 일종의 착시였음. 
         이것을 보고할 수는 없음.
+
     그래서 하나하나 읽어 보았다
         호응도가 높은 기사들과 그렇지 않은 기사들의 차이가 있느냐
         있다
@@ -116,6 +142,7 @@ ANALYSIS
             다른 주제에도 횡전개될 수 있는가
             기술을 적용하는 과정에서 인간이 포착해내지 못했던 요소들이 나오는가
                 이것이 나온다면 매우 좋을 것이다
+
     그 외의 Deliverables
         Raw Data
         Graphs
@@ -133,6 +160,7 @@ ANALYSIS
     keywords 들을 hot 과 not 으로 구분해서 word embedding 으로 tsne 해 봤는데 나눠지지가 않는다.
     LDA/LSI
         LDA/LSA 에서 수치들이 뭔지를 일단 확인 해야 한다
+        그런데 잘 포착이 안되는 것 같다
     Features
         ∗ Categories
             이거는 수작업으로 한 것이다
@@ -168,9 +196,11 @@ Twitter Data 도 분석해서 제공한다
     꼭 그 지역이 아니더라도, 이것을 가지고 뭔가를 해 볼 수 있지 않을까?
 
 Code 섹션 추가
+    github
 
 ---
 DELIVERABLES
+    el niño 는 모두 nino 로 변환되었다. 처리의 편의성을 위하여.
     데이타
         raw(json)
         .xls
@@ -187,6 +217,7 @@ DELIVERABLES
             title
             search_keyword
             datePublished
+                Pre-season and Post-impact Analysis 가 가능하게 될 것이다. 이 정보가 있음으로서.
             source
             facebook
             comments
@@ -208,17 +239,10 @@ DELIVERABLES
         결과에 대한 이해
 
 ---
-WHAT WE GOT AS A RESEARCH
-    SNS 공간에서의 독자 반응에 대한 인사이트와 그 가설
-    그 가설을 LDA 방법등으로 증명하는 것
-    아이디어 좀 더 생각해 보자
-
----
 쫙 읽으면서 느낀 것
-    케냐 사람들은 정부/기관측이 발신한 정보가 어떻게 전달되는지에 관심이 많다
-    Feature Extraction 으로 돌아가서
-        Topic (Weather/Politics/Corruption)
-        Source (Domestic/International/US?)
-        Sentiment 
-        를 의미있게 뽑아낼 수 있나? 내 데이타 셋에서?
-        제목을 보면 그런게 추세가 느껴지나?
+Epilogue
+    IRI 사람들은 정부/기관측이 발신한 정보가 어떻게 전달되는지에 관심이 많다
+    하나하나 세부적으로 보면
+        데이타의 Source 는 인기도에 큰 영향을 안 미치는 듯
+            Domestic/International/US 등등
+            혹은 Domestic 이라도 누구/어느기관 이냐는 등

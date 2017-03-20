@@ -59,18 +59,21 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
 
     print "extracting features..."
     FIRST_N = 3
-    list_X, list_Y = [], []
-    glove_title_matrix, glove_body_matrix = np.zeros(glove_len), np.zeros(glove_len)
+    list_X = []
+    list_Y = []
+    glove_title_matrix = np.zeros(glove_len)
+    glove_body_matrix = np.zeros(glove_len)
     cnt_data = 0
 
     for article in articles_db:
         if article['facebook']: # only use facebook articles
             cnt_data += 1
-            new_dict_X, new_dict_Y = {}, {}
+            new_dict_X = {}
+            new_dict_Y = {}
 
             art_title = article['title'] 
             art_body  = article['text']
-            art_body_head  = (' ').join(art_body.split('\n')[:FIRST_N]) # first N sentences
+            art_body_head  = (' ').join(art_body.split('\n')[:FIRST_N])
 
             # ---------------------
             # numerical features
@@ -90,10 +93,12 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             # categorical features
             # ---------------------
 
+            # category
+            new_dict_X['category_{}'.format(article['category'])] = True
+
             # keyword
-            art_keywords = article['keywords']
-            for j in range(len(art_keywords)):
-                new_dict_X['keywd_{}'.format(art_keywords[j])] = True
+            for kw in article['keywords']:
+                new_dict_X['keywd_{}'.format(kw)] = True
 
             # n-grams (title)
             title_tokens = nltk.word_tokenize(art_title)
@@ -113,11 +118,15 @@ def predict_popularity(ARTICLE_FILE, mode='binary'):
             for trigram in ngrams(body_tokens, 3):
                 new_dict_X['tri_body_{}'.format(trigram)] = True
 
-            # # year & month
-            # new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
+            # year & month
+            new_dict_X['date_{}'.format(article.get('datePublished','')[:7])] = True
 
-            # # media
-            # new_dict_X['media_{}'.format(article['media'])] = True
+            # media
+            new_dict_X['media_{}'.format(article['media'])] = True
+
+            # search keyword
+            for kw in article['search_keyword']:
+                new_dict_X['search_keyword_{}'.format(kw)] = True            
 
             # gazetteers
             politicians = ['Uhuru', 'Kenyatta', 'Mudavadi', 'Kamau', 'Ruto', 

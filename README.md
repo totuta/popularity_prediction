@@ -1,4 +1,4 @@
-# twitter-gathering #
+# Popularity Prediction for News Article Entries on Facebook #
 
 ### What is this repository for? ###
 

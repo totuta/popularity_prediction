@@ -27,12 +27,11 @@ TBW
 
 ### Note ###
 
-* output is NOT in the proper json format
-	* output file ends with `,`
-	* this is for appending newer data at the end of output file
-		* this should be addressed in later version
+* TBW
 
 
 ### Who do I talk to? ###
 
 
+* Repo owner or admin
+    * totuta
